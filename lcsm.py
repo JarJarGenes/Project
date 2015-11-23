@@ -12,6 +12,7 @@ import re
 def parsefile(fastafile):
     """ Grabs the raw sequence from a fasta file
     """
+    ## ADD EXTRA COMMENT
     sequences = fastafile.split(">")
     sequences = sequences[1:]
     nameseqlist = []
