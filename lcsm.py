@@ -12,8 +12,11 @@ import re
 def parsefile(fastafile):
     """ Grabs the raw sequence from a fasta file
     """
+<<<<<<< HEAD
     ## ADD EXTRA COMMENT
     ## Extra Extra COMMENT
+=======
+>>>>>>> parent of c44067a... Change test
     sequences = fastafile.split(">")
     sequences = sequences[1:]
     nameseqlist = []
