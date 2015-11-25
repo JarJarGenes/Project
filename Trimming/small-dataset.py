@@ -11,6 +11,8 @@ import os.path
 import subprocess
 
 def small_dataset(input_file):
+    """
+    """
     counter = 0
     fastq_string = ''     
     
@@ -18,7 +20,7 @@ def small_dataset(input_file):
 
         if line.startswith('@'):  
             counter +=1                    
-        if counter > 4000:
+        if counter > 4000: #To take small samples
             break                    
         fastq_string+=line        
 
