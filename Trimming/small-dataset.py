@@ -10,7 +10,7 @@ from sys import argv
 import os.path
 import subprocess
 
-def small_dataset(input_file):
+def small_dataset(input_file,filename):
     """
     Description: function that gets the first 4000 sequences in the input FastQ file
     Input: FastQ file sequence
@@ -28,7 +28,7 @@ def small_dataset(input_file):
             break                    
         fastq_string+=line        
     #Generates the fastq file with the string that stored the 4000 sequences of the FastQ file
-    fastq_file = 'SRR1271857.fastq'
+    fastq_file = filename
     outfile = open(fastq_file,'w')
     outfile.write(fastq_string)
     outfile.close()
@@ -39,7 +39,7 @@ def fastX(fastq_string):
     """
     This is a function that returns a fastq file with trimmed reads
     """
-    out_file = 'test_outfile.fastq'
+    out_file = 'test_outfile_'+fastq_string
     #cmd = 'fastq_quality_trimmer -t %s -i %s -o %s ' % (25,'../yeast/CENPK_RNA_1.fastq', out_file)
     cmd = 'fastq_quality_trimmer -t %s -i %s -o %s ' % (25,fastq_string, out_file)    
     #If the file is already there it won't overwrite the old file
@@ -55,12 +55,11 @@ def fastX(fastq_string):
     
 if __name__== "__main__":
 
+
    with open(argv[1]) as fh:
-       fastq_file = small_dataset(fh)
-   """
-   directory = 'SRP041695/SRR1271857.fastq'
-   with open(directory) as fh:
-       fastq_string = small_dataset(fh)
-   """
+       filename = fh.name
+       index = filename.rfind('/')
+       filename = filename[index:].replace('/','')
+       fastq_file = small_dataset(fh,filename)
    fastX(fastq_file)
    
