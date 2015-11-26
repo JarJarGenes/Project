@@ -12,6 +12,10 @@ import subprocess
 
 def small_dataset(input_file):
     """
+    Description: function that gets the first 4000 sequences in the input FastQ file
+    Input: FastQ file sequence
+    Output: Generates an output fastQ file with the 4000 sequences
+    Return: String with the name of the output fastq file name
     """
     counter = 0
     fastq_string = ''     
@@ -23,7 +27,7 @@ def small_dataset(input_file):
         if counter > 4000: #To take small samples
             break                    
         fastq_string+=line        
-
+    #Generates the fastq file with the string that stored the 4000 sequences of the FastQ file
     fastq_file = 'SRR1271857.fastq'
     outfile = open(fastq_file,'w')
     outfile.write(fastq_string)
@@ -32,9 +36,9 @@ def small_dataset(input_file):
     return fastq_file
     
 def fastX(fastq_string):
-    """This is a function that returns a fastq file with trimmed reads
     """
-    
+    This is a function that returns a fastq file with trimmed reads
+    """
     out_file = 'test_outfile.fastq'
     #cmd = 'fastq_quality_trimmer -t %s -i %s -o %s ' % (25,'../yeast/CENPK_RNA_1.fastq', out_file)
     cmd = 'fastq_quality_trimmer -t %s -i %s -o %s ' % (25,fastq_string, out_file)    
