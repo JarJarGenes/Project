@@ -43,6 +43,7 @@ def run_my_program(cmd):
     """
     print cmd
     #subprocess.check_call(cmd, shell=True)
+
 def bowtie2_options():
     """Bowtie run options
     """
@@ -57,11 +58,26 @@ def bowtie2_options():
             print 'Phred score or format file no valid, try again'
     
     return phred_score, format_file
+
+def input_file_checker(input_file):
+    out_input = False
+    out = False
+    if not os.path.exists(input_file):
+        print 'Your input file seems that doesn\'t exists'
+        while not out_input:
+            input_file = raw_input('Input file name("0" to exit): ')
+            if os.path.exists(input_file):
+                out_input = True 
+            elif input_file == '0':
+                out=True
+        
+    return input_file, out
         
 def annotation_game():
-    """Interactive program
+    """Interactive program for annotation
     """
     print "\nWelcome to annotation\n"
+    out = False
     try:
         out_folder = argv[1]
         input_file = argv[2]
@@ -73,10 +89,7 @@ def annotation_game():
         overwrite = raw_input('Your output folder already exist, overwrite? (Y|N)')
         if overwrite.upper() == 'N':
             out_folder = raw_input('Output folder name: ')
-    while not os.path.exists(input_file):
-        print 'Your input file seems that doesn\'t exists'
-        input_file = raw_input('Input file name: ')
-    out = False
+    input_file, out = input_file_checker(input_file)
     while not out:
         print "Choose one of the following tasks:\n"
         tools = {1:'Bowtie2',2:"Cufflinks",3:"Tophat2",4:"help", 5: "quit"}
@@ -88,24 +101,32 @@ def annotation_game():
             cmd = 'bowtie2 -x %s -%s --phred%s >%s' %(input_file,format_file, phred_score, out_folder)
             ##(out_folder(name_indexes),input_file(fastQ_file or fasta file respectively),format_file phred_score(64|33))
         elif tool == '2':
-            warming = raw_input('For cufflinks you need a sam file, run bowtie2 first if you need a bam file. Already have it(should be your input file!)? Write "continue" or "help" to get the correct files. ')
-            if warming == 'continue':
-                input_file = raw_input('Insert again the name of your sam file: ')
-                cmd = 'cufflinks -o %s %s' %(out_folder, input_file) #[sam_file = 'accepted_hits.bam]
+            bye = False
+            while not bye:
+                warming = raw_input('For cufflinks you need a sam file, run bowtie2 first if you need a bam file. Already have it(should be your input file!)? Press 1 to continue or press 0 to "help" to get the correct files. ')
+                if warming == '1':
+                    input_file = raw_input('Insert again the name of your sam file: ')
+                    cmd = 'cufflinks -o %s %s' %(out_folder, input_file) #[sam_file = 'accepted_hits.bam]
+                    bye = True
+                elif warming == '0':
+                    cont = raw_input('You can use bowtie2 to create a bam file and then samtools to get the sam file, do you still want to continue? Type 1 or 0 (1=YES|0=NO) ')
+                    ##also tophat2!!??? Maybe we can give an option
+                    if cont.lower() == 'y' or cont.lower() == 'yes':
+                        phred_score, format_file = bowtie2_options()
+                        cmd = 'bowtie2 -x %s -%s --phred%s >%s' %(input_file,format_file, phred_score, out_folder)
+                        run_my_program(cmd)
+                        print 'Check the name of your bam file and choose cufflinks again'
+                        cmd = 'ls -lh'
+                        run_my_program(cmd)
+                        bam_file = raw_input('Name of your bam file: ')
+                        cmd = 'samtools view %s - %s' %(bam_file, out_folder)  
+                        run_my_program(cmd)
+                    else:
+                        cmd = False
             else:
-                cont = raw_input('You can use bowtie2 to create a bam file and then samtools to get the sam file, do you still want to continue?(Y|N) ')
-                if cont.lower() == 'y' or cont.lower() == 'yes':
-                    phred_score, format_file = bowtie2_options()
-                    cmd = 'bowtie2 -x %s -%s --phred%s >%s' %(input_file,format_file, phred_score, out_folder)
-                    run_my_program(cmd)
-                    print 'Check the name of your bam file and choose cufflinks again'
-                    cmd = 'ls -lh'
-                    run_my_program(cmd)
-                    bam_file = raw_input('Name of your bam file: ')
-                    cmd = 'samtools view %s - %s' %(bam_file, out_folder)  
-                    run_my_program(cmd)
-                else:
-                    cmd = False                                
+                exit_here = raw_input('Do you want to exit? Press 0 ')
+                if exist_here == '0':
+                    bye = True
             ##%(out_folder, sam_file) #[sam_file = 'accepted_hits.bam]
         elif tool == '3':
             print "For tophat you nedd a file with indexes"
@@ -133,19 +154,19 @@ def quality_game():
     """Quality interactive program
     """
     print "\nWelcome to quality check\n"
+    
     try:
         input_file = argv[1]
     except IndexError:
-        input_file = raw_input("Please inser a name for your input file: ")
-    while not os.path.exists(input_file):
-        print 'Your input file seems that doesn\'t exists'
-        input_file = raw_input('Input file name: ')
-    with open(input_file) as fh:
-       filename = fh.name
-       index = filename.rfind('/')
-       filename = filename[index:].replace('/','')
-       fastq_file = small_dataset(fh,filename)    
-    fastX(fastq_file)
+        input_file = raw_input("Please insert a name for your input file: ")
+    input_file, out = input_file_checker(input_file)
+    while not out:
+        with open(input_file) as fh:
+           filename = fh.name
+           index = filename.rfind('/')
+           filename = filename[index:].replace('/','')
+           fastq_file = small_dataset(fh,filename)    
+        fastX(fastq_file)
    
 def small_dataset(input_file,filename):
     """
