@@ -27,7 +27,7 @@ def help_user():
     stop = False
     while not stop:
         options = {1:"Quality check", 2: "Annotation tools", 3: "Exit"}    
-        print "\nWELCOME TO JAR-JAR PLATFORM!\nThis platform is design as a tool of tools, here you can choose between several option for treat your data.Choose one of the following:\n"
+        print "\nWELCOME TO JAR-JAR PLATFORM!\nThis platform is design as a tool of tools, here you can choose between several option for treat your data. Choose one of the following:\n"
         for number, option in options.items():
             print number, option
         user = raw_input("\nInsert a number from the list: ")
@@ -35,6 +35,8 @@ def help_user():
             stop = True
         elif user == '2':
             annotation_game()
+        elif user == '1':
+            quality_game()
         
 def run_my_program(cmd):
     """This functions runs a choosen tool in the linux command line
