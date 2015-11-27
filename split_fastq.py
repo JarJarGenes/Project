@@ -11,21 +11,25 @@ from sys import argv
 import time
 
 #Classes & Functions
-def splitfile(filename):
+def splitfile(filename,reads = float("inf")):
     """ Splits a fastq file that has concatenated reads into two files
 
     Arguments:
     filename -- str, name of the fastqfile (excluding extension)
-
+    reads -- float, number of reads to split
     Output:
     N/A
     """
     openfile = open(filename+".fastq")
     out_1 = open(filename+"_1.fastq","w")
     out_2 = open(filename+"_2.fastq","w")
-
+    counter = 0
     for line in openfile:
-        print line
+        counter +=1
+        
+        if counter > reads*4:
+            break
+        
         line = line.strip()
         if line.startswith("@") or line.startswith("+"):
             out_1.write(line)
@@ -45,12 +49,14 @@ def splitfile(filename):
     out_2.close()
 
     print "Done!"
-            
-            
     
 #Main
 if __name__ == "__main__":
     start_time = time.time()
     input_filename = argv[1]
-    splitfile(input_filename)
+    try:
+        reads = float(argv[2])
+        splitfile(input_filename,reads)
+    except IndexError:
+        splitfile(input_filename)
     print("program took %s seconds to run" % (time.time() - start_time))
