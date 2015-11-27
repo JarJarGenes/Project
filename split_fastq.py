@@ -15,30 +15,31 @@ def splitfile(filename):
     """ Splits a fastq file that has concatenated reads into two files
 
     Arguments:
-    filename -- str, name of the fastqfile (including extension)
+    filename -- str, name of the fastqfile (excluding extension)
 
     Output:
     N/A
     """
-    openfile = open(filename)
-    out_1 = open(filename.strip(".fastq")+"_1.fastq","w")
-    out_2 = open(filename.strip(".fastq")+"_2.fastq","w")
-    counter = 0
-    while counter <1000:
-        for line in openfile:
-            line = line.strip()
-            counter += 1
-            if line.startswith("@") or line.startswith("+"):
-                out_1.write(line)
-                out_1.write("\n")
-                out_2.write(line)
-                out_2.write("\n")
-            else:
-                length = len(line)
-                part1 = line[:(length/2)+1]
-                part2 = line[(length/2):]
-                out_1.write(part1+"\n")
-                out_2.write(part2+"\n")
+    openfile = open(filename+".fastq")
+    out_1 = open(filename+"_1.fastq","w")
+    out_2 = open(filename+"_2.fastq","w")
+
+    for line in openfile:
+        print line
+        line = line.strip()
+        if line.startswith("@") or line.startswith("+"):
+            out_1.write(line)
+            out_1.write("\n")
+            out_2.write(line)
+            out_2.write("\n")
+        elif line != "\n":
+            length = len(line)
+            split = length/2
+            part1 = line[:int((length/2))]
+            part2 = line[int((length/2)):]
+            out_1.write(part1+"\n")
+            out_2.write(part2+"\n")
+
     openfile.close()
     out_1.close()
     out_2.close()
