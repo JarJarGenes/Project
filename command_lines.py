@@ -80,7 +80,7 @@ def annotation_game():
     out = False
     try:
         out_folder = argv[1]
-        input_file = argv[2]
+        #input_file = argv[2]
     except IndexError:
         print 'Name for your output folder and input file are requiered'
         out_folder = raw_input('Output folder name: ')
@@ -92,7 +92,7 @@ def annotation_game():
     input_file, out = input_file_checker(input_file)
     while not out:
         print "Choose one of the following tasks:\n"
-        tools = {1:'Bowtie2',2:"Cufflinks",3:"Tophat2",4:"help", 5: "quit"}
+        tools = {1:'Bowtie2',2:"Cufflinks",3:"Tophat2",4:"HiSat", 5: "help", 6: "quit"}
         for number, tool in tools.items():
             print number, tool
         tool = raw_input('\nWhat tool would you like to choose? ')    
@@ -129,12 +129,54 @@ def annotation_game():
                     bye = True
             ##%(out_folder, sam_file) #[sam_file = 'accepted_hits.bam]
         elif tool == '3':
-            print "For tophat you nedd a file with indexes"
+            print "For tophat you need a file with indexes"
             name_indexes = raw_input('Name_indexes: ')
             reads_file = input_file
             cmd = 'tophat2 -o %s %s  %s' %(out_folder, name_indexes, reads_file)
             #(out_folder, name_indexes, reads_file)
+
         elif tool == "4":
+            print "Hisat needs the following files to function"
+            print "- two files containing paired end read mate-pairs (example_1.fq & example_2.fq)"
+            print "- one file containing the (draft) genome"
+            subprocess.check_call("find *.fastq", shell = True)
+            seq_1 = raw_input('Name of file containing _1 mate pair ends: ')
+            seq_2 = raw_input('Name of file containing _2 mate pair ends: ')
+            subprocess.check_call("find *.fasta", shell = True)
+            genome = raw_input('Name of file containing draft genome: ')
+
+            #Runs hisat-build
+            choice = None
+            while choice != "Y" or choice != "N":
+                choice = raw_input("HiSat nees an index file of the genome, create it? Y|N")
+                choice = choice.upper()
+            if choice == "Y":
+                cmd = "hisat2-build %s build_index"
+                print cmd
+                subprocess.check_call(cmd, shell = True)
+            else:
+                if os.path.isfile("build_index.1.ht2"):
+                    continue
+                else:
+                    print "Index files do not exist, please create them"
+                    return
+            output = raw_input("please specify the name of the .sam output file (excluding extension): " )    
+            print "\nHisat will now start aligning reads to the genome\n"
+            sleep(3)
+            cmd = "hisat2 -x build_index -1 %s -2 %s -S %s.sam" %(seq_1,seq_2,output)
+            print cmd
+            subprocess.check_call(cmd, shell = True)
+
+            #create bam, sorted bam and bam index file
+            command = "samtools view -b %s.sam > %s.bam"
+            subprocess.check_call(command, shell = True)
+            command = "samtools sort %s.bam %s.sorted"
+            subprocess.check_call(command, shell = True)
+            command = "samtools index %s.sorted.bam"
+            subprocess.check_call(command, shell = True)
+
+            print "All files have been created, use igv.sh to load and view results!" 
+        elif tool == "5":
             print ('help lines')
             cmd = False
             #bowtie2 indexes command line: 'bowtie2-build -f %s %s' %(FASTA_reference, name_indexes)
@@ -142,7 +184,8 @@ def annotation_game():
             #tophat2 command line: 'tophat2 -o %s %s  %s' %(out_folder, name_indexes, reads_file)
             #samtools command line(we need this for cufflinks): 'samtools view %s - %s' %(bam_file, out_sam_file)
             #cufflinks command line: 'cufflinks -o %s %s'%(out_folder, sam_file) [sam_file = 'accepted_hits.bam]
-        elif tool ==  "5":
+            
+        elif tool ==  "6":
             out = True
             cmd = False
         if cmd:
