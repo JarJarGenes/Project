@@ -140,11 +140,35 @@ def annotation_game():
             print "Hisat needs the following files to function"
             print "- two files containing paired end read mate-pairs (example_1.fq & example_2.fq)"
             print "- one file containing the (draft) genome"
-            subprocess.check_call("find *.fastq", shell = True)
-            seq_1 = raw_input('Name of file containing _1 mate pair ends: ')
-            seq_2 = raw_input('Name of file containing _2 mate pair ends: ')
-            subprocess.check_call("find *.fasta", shell = True)
-            genome = raw_input('Name of file containing draft genome: ')
+            files = subprocess.check_output("find *.fastq",shell = True)
+            filelist = files.split()
+            key = 0
+            filedict = {}
+            for elem in filelist:
+                filedict[key]=elem
+                key += 1
+            
+            for number, elem in filedict.items():
+                print number, elem
+                
+            seq_1 = raw_input('Number of file containing _1 mate pair ends: ')
+            seq_1 = filedict[int(seq_1)]
+            seq_2 = raw_input('Number of file containing _2 mate pair ends: ')
+            seq_2 = filedict[int(seq_2)]            
+            
+            files = subprocess.check_output("find *.fasta", shell = True)
+            filelist = files.split()
+            key = 0
+            filedict = {}
+            for elem in filelist:
+                filedict[key]=elem
+                key += 1
+            
+            for number, elem in filedict.items():
+                print number, elem
+
+            genome = raw_input('Number of file containing draft genome: ')
+            genome = filedict[int(genome)]
 
             #Runs hisat-build
             choice = None
