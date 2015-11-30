@@ -7,6 +7,7 @@ Script: Annotation
 from sys import argv
 import subprocess
 import os.path
+import time
 
 #function
 def jarjar():
@@ -147,32 +148,36 @@ def annotation_game():
 
             #Runs hisat-build
             choice = None
-            while choice != "Y" or choice != "N":
+            while choice not in ["Y","N"]:
                 choice = raw_input("HiSat nees an index file of the genome, create it? Y|N")
-                choice = choice.upper()
+                print choice
+                
             if choice == "Y":
-                cmd = "hisat2-build %s build_index"
+                cmd = "hisat2-build %s build_index" %genome
                 print cmd
                 subprocess.check_call(cmd, shell = True)
-            else:
+            elif choice == "N":
                 if os.path.isfile("build_index.1.ht2"):
-                    continue
+                    print "Index files exist, continuing!"
                 else:
                     print "Index files do not exist, please create them"
                     return
+            else:
+                print "Index files do not exist, please create them"
+                return
             output = raw_input("please specify the name of the .sam output file (excluding extension): " )    
             print "\nHisat will now start aligning reads to the genome\n"
-            sleep(3)
+            time.sleep(3)
             cmd = "hisat2 -x build_index -1 %s -2 %s -S %s.sam" %(seq_1,seq_2,output)
             print cmd
             subprocess.check_call(cmd, shell = True)
 
             #create bam, sorted bam and bam index file
-            command = "samtools view -b %s.sam > %s.bam"
+            command = "samtools view -bS %s.sam > %s.bam"%(output,output)
             subprocess.check_call(command, shell = True)
-            command = "samtools sort %s.bam %s.sorted"
+            command = "samtools sort %s.bam %s.sorted"%(output,output)
             subprocess.check_call(command, shell = True)
-            command = "samtools index %s.sorted.bam"
+            command = "samtools index %s.sorted.bam"%output
             subprocess.check_call(command, shell = True)
 
             print "All files have been created, use igv.sh to load and view results!" 
