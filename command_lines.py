@@ -112,7 +112,7 @@ def annotation_game():
 
     while not out:
         print "Choose one of the following tasks:\n"
-        cmd = False
+
         tools = {1:'Bowtie2',2:"Cufflinks",3:"Tophat2",
                  4:"HiSat", 5: "help", 6: "quit"}
 
@@ -259,6 +259,11 @@ def hisat_build():
     for elem in filelist:
         filedict[key]=elem
         key += 1
+        
+    print "List of potential genome files:\n","-"*20
+    for number, elem in filedict.items():
+        print number, elem
+    print "-"*20,"\n"
     
     genome = raw_input('Number of file containing draft genome: ')
     genome = filedict[int(genome)]
@@ -276,6 +281,7 @@ def hisat_align():
     print "- two files containing paired end read mate-pairs (example_1.fq & example_2.fq)"
 
     files = subprocess.check_output("find *.fastq",shell = True)
+    files += subprocess.check_output("find *.fq",shell = True)
     filelist = files.split()
     key = 0
     filedict = {}
