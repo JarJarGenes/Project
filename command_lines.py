@@ -45,26 +45,6 @@ def help_user():
             annotation_game()
         elif user == '1':
             quality_game()
-        
-def run_my_program(cmd):
-    """This functions runs a choosen tool in the linux command line
-    """
-    print cmd
-    #subprocess.check_call(cmd, shell=True)
-
-def input_file_checker(input_file):
-    out_input = False
-    out = False
-    if not os.path.exists(input_file):
-        print 'Your input file seems that doesn\'t exists'
-        while not out_input:
-            input_file = raw_input('Input file name("0" to exit): ')
-            if os.path.exists(input_file):
-                out_input = True 
-            elif input_file == '0':
-                out=True
-        
-    return input_file, out
 
 def quality_game():
     """Quality interactive program
@@ -98,8 +78,6 @@ def fastX(fastq_string):
         check = raw_input( "Test_outfile.fastq output file exists, overwrite? (Y/N)\n: ")
         if check == "Y" or check == "y":
             subprocess.check_call(cmd,shell=True)
-        else: #Maybe this is redundant?
-            pass
     else:
         subprocess.check_call(cmd,shell=True)
     return out_file
@@ -119,21 +97,6 @@ def annotation_game():
         for number, tool in tools.items():
             print number, tool
         tool = raw_input('\nWhat tool would you like to choose? ')
-
-        if tool in range(1,4):
-            try:
-                out_folder = argv[1]
-                input_file = argv[2]
-            except IndexError:
-                print 'Name for your output folder and input file are required'
-                out_folder = raw_input('Output folder name: ')
-                input_file = raw_input('Input file name: ')
-            if os.path.exists(out_folder):
-                overwrite = raw_input("Your output folder already exist, "
-                                      "overwrite? (Y|N)")
-                if overwrite.upper() == 'N':
-                    out_folder = raw_input('Output folder name: ')
-            input_file, out = input_file_checker(input_file)
         
         if tool == '1':
             subprocess.check_call("clear", shell = True)
@@ -151,7 +114,6 @@ def annotation_game():
         elif tool == "5":
             subprocess.check_call("clear", shell = True)
             print ('help lines')
-            cmd = False
             #bowtie2 indexes command line: 'bowtie2-build -f %s %s' %(FASTA_reference, name_indexes)
             #bowtie2 command line: 'bowtie2 -x %s -q or -f % --phred%d'    %(name_indexes,fastQ_file or fasta file respectively, phred_score(64|33))
             #tophat2 command line: 'tophat2 -o %s %s  %s' %(out_folder, name_indexes, reads_file)
@@ -159,10 +121,7 @@ def annotation_game():
             #cufflinks command line: 'cufflinks -o %s %s'%(out_folder, sam_file) [sam_file = 'accepted_hits.bam] 
         elif tool ==  "6":
             out = True
-            cmd = False
 
-        if cmd:
-            run_my_program(cmd)
         else:
             print 'Thanks for using us'
 
@@ -192,41 +151,48 @@ def bowtie2_options():
 def cufflinks():
     endprogram = False
     while not endprogram:
-        warning = raw_input("For cufflinks you need a sam file,"
-                            "run bowtie2 first if you need a bam file."
-                            "Already have it(should be your input file!)?"
-                            "Press 1 to continue or press 0 to"
-                            '"help" to get the correct files. ')
+        subprocess.check_call("clear",shell=True)
+        warning = raw_input("Welcome to cufflinks\n"
+                            "--------------------------------------\n"
+                            "For cufflinks you need a sam/bam file."
+                            "\nAlready have it? press 1!\n"
+                            "Press 0 for "
+                            '"help" on how to get the correct files. ')
 
         if warning == '1':
-            input_file = raw_input('Insert again the name of your sam file: ')
-            cmd = 'cufflinks -o %s %s' %(out_folder, input_file)
-            bye = True
-        elif warning == '0':
-            cont = raw_input("You can use bowtie2 to create a bam file and"
-                             "then samtools to get the sam file, "
-                             "do you still want to continue?"
-                             "Type 1 or 0 (1=YES|0=NO)")
-            ##also tophat2!!??? Maybe we can give an option
-            if cont.lower() == 'y' or cont.lower() == 'yes':
-                phred_score, format_file = bowtie2_options()
-                cmd = ('bowtie2 -x %s -%s --phred%s >%s'
-                       %(input_file,format_file, phred_score, out_folder))
-                run_my_program(cmd)
-                print ("Check the name of your bam"
-                       "file and choose cufflinks again")
-                cmd = 'ls -lh'
-                run_my_program(cmd)
-                bam_file = raw_input('Name of your bam file: ')
-                cmd = 'samtools view %s - %s' %(bam_file, out_folder)  
-                run_my_program(cmd)
+            sbamfiles = subprocess.check_output('find *.sorted.?am',shell=True)
+            sbamlist = sbamfiles.split()
+            key = 0
+            filedict = {}
+            for elem in sbamlist:
+                filedict[key]=elem
+                key += 1
+        
+            print "List of potential sam/bam files:\n","-"*20
+            for number, elem in filedict.items():
+                print number, elem
+            print "-"*20,"\n"
+    
+            input_file = raw_input('Insert the number of the sam/bam file: ')
+            input_file = filedict[int(input_file)]
+            out_folder = raw_input("Please specify the folder the results "
+                                   "should be outputted to"
+                                   "\n(Leave blank to use current folder): ")
+            if len(out_folder)!= 0:
+                out_folder = "-o "+out_folder
             else:
-                cmd = False
-    else:
-        exit_here = raw_input('Do you want to exit? Press 0 ')
-        if exit_here == '0':
+                out_folder = "-o ./"
+            cmd = 'cufflinks %s %s' %(out_folder, input_file)
+            
+            subprocess.check_call(cmd, shell = True)
             endprogram = True
-    ##%(out_folder, sam_file) #[sam_file = 'accepted_hits.bam]    
+        elif warning == '0':
+            cont = raw_input("You can use HiSat to generate a sam/bam file "
+                             "Run HiSat first to get the file\n"
+                             "Press return to exit")
+            endprogram = True
+        else:
+            print "That's not 1 or 0!"
     return
 
 def tophat():
@@ -281,7 +247,7 @@ def hisat_align():
     print "- two files containing paired end read mate-pairs (example_1.fq & example_2.fq)"
 
     files = subprocess.check_output("find *.fastq",shell = True)
-    files += subprocess.check_output("find *.fq",shell = True)
+    #files += subprocess.check_output("find *.fq",shell = True)
     filelist = files.split()
     key = 0
     filedict = {}
