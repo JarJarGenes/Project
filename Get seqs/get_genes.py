@@ -54,7 +54,7 @@ def get_seq(records, output_name):
             if start:
                 if match or line.startswith('<'):
                     my_dict[label] = seq
-                    my_file.write(label+'\n'+seq+'\n')
+                    my_file.write('>'+label+'\n'+seq+'\n')
                     if match: label = line.strip(); seq = ''
                     else: start = False
                 else:
@@ -67,10 +67,10 @@ def get_seq(records, output_name):
         A_file = open('A_seqs.fasta','w')
         for label, seq in my_dict.items():
             if '(N)' in label:
-                N_file.write(label+'\n'+seq+'\n')
+                N_file.write('>'+label+'\n'+seq+'\n')
                 N_dict[label] = seq
             elif '(A)' in label:
-                A_file.write(label+'\n'+seq+'\n')
+                A_file.write('>'+label+'\n'+seq+'\n')
                 A_dict[label] = seq   
         subprocess.check_call('rm my_seq.txt', shell=True)
     print '------------------DONE'
