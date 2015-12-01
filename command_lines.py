@@ -197,7 +197,7 @@ def cufflinks():
             bye = True
         elif warning == '0':
             cont = raw_input("You can use bowtie2 to create a bam file and"
-                             "then samtools to get the sam file,
+                             "then samtools to get the sam file, "
                              "do you still want to continue?"
                              "Type 1 or 0 (1=YES|0=NO)")
             ##also tophat2!!??? Maybe we can give an option
