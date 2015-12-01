@@ -92,7 +92,7 @@ def annotation_game():
         print "Choose one of the following tasks:\n"
 
         tools = {1:'Bowtie2',2:"Cufflinks",3:"Tophat2",
-                 4:"HiSat", 5: "help", 6: "quit"}
+                 4:"HiSat", 5: "Help", 6: "Quit"}
 
         for number, tool in tools.items():
             print number, tool
