@@ -25,7 +25,7 @@ def get_name(file_txt):
     records = []
     for line in open(file_txt):
         records += re.findall(pattern,line)
-    
+    print records
     return records
     
 def get_seq(records, output_name):
@@ -40,12 +40,14 @@ def get_seq(records, output_name):
             -Two file with the seqs splitted
     """
     my_file = open(output_name, 'w')
+    N_dict = {}
+    A_dict = {}
+    my_dict = {}
+    seq = ''
     for each_name in records:
         cmd = ('wget -O my_seq.txt http://www.genome.jp/dbget-bin/www_bget?-f+ath+%s')%each_name       
         subprocess.check_call(cmd, shell=True)
         start = False
-        my_dict = {}
-        seq = ''
         pat = re.compile('\(A|N\)')
         for line in open('my_seq.txt'):            
             match = re.search(pat,line)
@@ -60,8 +62,7 @@ def get_seq(records, output_name):
             elif match:
                 label = line.strip()
                 start = True
-        N_dict = {}
-        A_dict = {}
+        
         N_file = open('N_seqs.fasta','w')
         A_file = open('A_seqs.fasta','w')
         for label, seq in my_dict.items():
@@ -70,9 +71,9 @@ def get_seq(records, output_name):
                 N_dict[label] = seq
             elif '(A)' in label:
                 A_file.write(label+'\n'+seq+'\n')
-                A_dict[label] = seq           
+                A_dict[label] = seq   
+        subprocess.check_call('rm my_seq.txt', shell=True)
     print '------------------DONE'
-    subprocess.check_call('rm my_seq.txt', shell=True)
     N_file.close()
     A_file.close()
     my_file.close()
@@ -81,8 +82,8 @@ def get_seq(records, output_name):
 if __name__ == '__main__':
     file_with_names = argv[1]
     while not os.path.exists(file_with_names):
-	cmd = subprocess.check_output('ls',shell=True)
-	print cmd
+        cmd = subprocess.check_output('ls',shell=True)
+        print cmd
         file_with_names = raw_input('Your program doesn\'t seem to exist.\nCheck the name and insert again the name: ')
     try:
         output_name = argv[2]
