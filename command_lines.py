@@ -8,13 +8,15 @@ from sys import argv
 import subprocess
 import os.path
 import time
+import itertools
 
 #function
 def jarjar():
+    subprocess.check_call("clear",shell=True)
     choices = {1:"Quality check",2:"Annotation tools",3:"Exit",4:"Help"}
     out = False
     while not out:
-        for key, value in choices:
+        for key, value in choices.iteritems():
             print key, value
         usr = raw_input("Choose one of the above: ")
         if usr == '1':
@@ -134,15 +136,20 @@ def annotation_game():
             input_file, out = input_file_checker(input_file)
         
         if tool == '1':
+            subprocess.check_call("clear", shell = True)
             bowtie()
         elif tool == '2':
+            subprocess.check_call("clear", shell = True)
             cufflinks()
         elif tool == '3':
+            subprocess.check_call("clear", shell = True)
             tophat()
         elif tool == "4":
+            subprocess.check_call("clear", shell = True)
             hisat_build()
             hisat_align()
         elif tool == "5":
+            subprocess.check_call("clear", shell = True)
             print ('help lines')
             cmd = False
             #bowtie2 indexes command line: 'bowtie2-build -f %s %s' %(FASTA_reference, name_indexes)
@@ -230,7 +237,21 @@ def tophat():
     #(out_folder, name_indexes, reads_file)
     return
 
-def hisat_build():   
+def hisat_build():
+    
+    build = False
+    if os.path.isfile("build_index.1.ht2"):
+        overwrite = None
+        while overwrite not in ["Y","N","y","n"]:
+            overwrite = raw_input("Some index files already exist, overwrite? Y|N: ")
+        if overwrite.upper() == "Y":
+            build = True
+        else:
+            return
+    else:
+        print "Index files do not exist, please create them"
+        build = True
+        
     files = subprocess.check_output("find *.fasta", shell = True)
     filelist = files.split()
     key = 0
@@ -239,43 +260,21 @@ def hisat_build():
         filedict[key]=elem
         key += 1
     
-    for number, elem in filedict.items():
-        print number, elem
-
     genome = raw_input('Number of file containing draft genome: ')
     genome = filedict[int(genome)]
 
     #Runs hisat-build
-    choice = None
-    while choice not in ["Y","N"]:
-        choice = raw_input("HiSat nees an index file of the genome, create it? Y|N")
-        print choice
-        
-    if choice == "Y":
+    if build:
         cmd = "hisat2-build %s build_index" %genome
         print cmd
         subprocess.check_call(cmd, shell = True)
-    elif choice == "N":
-        if os.path.isfile("build_index.1.ht2"):
-            print "Index files exist, continuing!"
-        else:
-            print "Index files do not exist, please create them"
-            return
-    else:
-        print "Index files do not exist, please create them"
-        return
-    output = raw_input("please specify the name of the .sam output file (excluding extension): " )    
-    print "\nHisat will now start aligning reads to the genome\n"
-    time.sleep(3)
-    cmd = "hisat2 -x build_index -1 %s -2 %s -S %s.sam" %(seq_1,seq_2,output)
-    print cmd
-    subprocess.check_call(cmd, shell = True)
     return
 
 def hisat_align():
+    
     print "Hisat needs the following files to function"
     print "- two files containing paired end read mate-pairs (example_1.fq & example_2.fq)"
-    print "- one file containing the (draft) genome"
+
     files = subprocess.check_output("find *.fastq",shell = True)
     filelist = files.split()
     key = 0
@@ -284,14 +283,23 @@ def hisat_align():
         filedict[key]=elem
         key += 1
     
+    print "List of potential fastq files:\n","-"*20
     for number, elem in filedict.items():
         print number, elem
+    print "-"*20,"\n"
         
     seq_1 = raw_input('Number of file containing _1 mate pair ends: ')
     seq_1 = filedict[int(seq_1)]
     seq_2 = raw_input('Number of file containing _2 mate pair ends: ')
     seq_2 = filedict[int(seq_2)]            
 
+    output = raw_input("please specify the name of the .sam output file (excluding extension): " )
+    subprocess.check_call("clear",shell = True)
+    print "\nHisat will now start aligning reads to the genome\n"
+    time.sleep(3)
+    cmd = "hisat2 -x build_index -1 %s -2 %s -S %s.sam" %(seq_1,seq_2,output)
+    print cmd
+    subprocess.check_call(cmd, shell = True)
 
     #create bam, sorted bam and bam index file
     command = "samtools view -bS %s.sam > %s.bam"%(output,output)
