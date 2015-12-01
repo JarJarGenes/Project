@@ -269,7 +269,7 @@ def hisat_align():
     subprocess.check_call("clear",shell = True)
     print "\nHisat will now start aligning reads to the genome\n"
     time.sleep(3)
-    cmd = "hisat2 -cufflinks -x build_index -1 %s -2 %s -S %s.sam" %(seq_1,seq_2,output)
+    cmd = "hisat2 --dta-cufflinks -x build_index -1 %s -2 %s -S %s.sam" %(seq_1,seq_2,output)
     print cmd
     subprocess.check_call(cmd, shell = True)
 
