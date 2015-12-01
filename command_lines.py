@@ -112,7 +112,7 @@ def annotation_game():
 
     while not out:
         print "Choose one of the following tasks:\n"
-
+        cmd = False
         tools = {1:'Bowtie2',2:"Cufflinks",3:"Tophat2",
                  4:"HiSat", 5: "help", 6: "quit"}
 
