@@ -94,8 +94,8 @@ def annotation_game():
     while not out:
         print "Choose one of the following tasks:\n"
 
-        tools = {1:'Bowtie2',2:"Cufflinks",3:"Tophat2",
-                 4:"HiSat", 5: "Help", 6: "Quit"}
+        tools = {1:'Bowtie2',2:"Cufflinks",3:"Cuffmerge",4:"Tophat2",
+                 5:"HiSat", 6: "Help", 7: "Quit"}
 
         for number, tool in tools.items():
             print number, tool
@@ -109,12 +109,15 @@ def annotation_game():
             cufflinks()
         elif tool == '3':
             subprocess.check_call("clear", shell = True)
+            cuffmerge()
+        elif tool == '4':
+            subprocess.check_call("clear", shell = True)
             tophat()
-        elif tool == "4":
+        elif tool == "5":
             subprocess.check_call("clear", shell = True)
             hisat_build()
             hisat_align()
-        elif tool == "5":
+        elif tool == "6":
             subprocess.check_call("clear", shell = True)
             print ('help lines')
             #bowtie2 indexes command line: 'bowtie2-build -f %s %s' %(FASTA_reference, name_indexes)
@@ -122,7 +125,7 @@ def annotation_game():
             #tophat2 command line: 'tophat2 -o %s %s  %s' %(out_folder, name_indexes, reads_file)
             #samtools command line(we need this for cufflinks): 'samtools view %s - %s' %(bam_file, out_sam_file)
             #cufflinks command line: 'cufflinks -o %s %s'%(out_folder, sam_file) [sam_file = 'accepted_hits.bam] 
-        elif tool ==  "6":
+        elif tool ==  "7":
             out = True
 
         else:
@@ -173,7 +176,7 @@ def cufflinks():
                 folder = "-o "+out_folder
             else:
                 folder = "-o ./"
-            cmd = 'cufflinks -q --no-update-check %s %s' %(folder, input_file)
+            cmd = 'cufflinks -q -p 16 --no-update-check %s %s' %(folder, input_file)
             starttime = time.time()
             subprocess.check_call(cmd, shell = True)
             elapsedtime = time.time() - starttime
@@ -194,8 +197,19 @@ def cufflinks():
 
     return
 
-def cuffdiff():
+def cuffmerge():
+    
+    choice = choice_yn("run Cuffmerge? Y|N: ")
+    if choice:
+        cmd = "cuffmerge -p 16 gtfmerge.txt"
+        subprocess.check_call(cmd, shell = True)
+        print "Cuffmerge ran succesfully, returning to previous screen"
+        time.sleep(2)
+    else:
+        print "Cuffmerge didn't run. Returning to previous screen now"
+        time.sleep(2)     
     return
+                       
 def tophat():
     print "For tophat you need a file with indexes"
     name_indexes = raw_input('Name_indexes: ')
@@ -225,7 +239,7 @@ def hisat_build():
 
     #Runs hisat-build
     if build:
-        cmd = "hisat2-build %s build_index" %genome
+        cmd = "hisat2-build -p 16 %s build_index" %genome
         print cmd
         subprocess.check_call(cmd, shell = True)
     return
@@ -245,7 +259,7 @@ def hisat_align():
     subprocess.check_call("clear",shell = True)
     print "\nHisat will now start aligning reads to the genome\n"
     time.sleep(3)
-    cmd = "hisat2 --dta-cufflinks -x build_index -1 %s -2 %s -S %s.sam" %(seq_1,seq_2,output)
+    cmd = "hisat2 --dta-cufflinks -p 16 -x build_index -1 %s -2 %s -S %s.sam" %(seq_1,seq_2,output)
     print cmd
     subprocess.check_call(cmd, shell = True)
     print "HiSat is done mapping the reads."
