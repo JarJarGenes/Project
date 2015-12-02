@@ -26,7 +26,10 @@ def jarjar():
         elif usr == '0':
             help_user()    
         elif usr == '3':
-            print "May the force be with you"
+            subprocess.check_call("clear",shell= True)
+            print "Farewell, and may the force be with you."
+            time.sleep(2)
+            subprocess.check_call("clear",shell= True)
             out=True
         
 def help_user():
@@ -75,8 +78,8 @@ def fastX(fastq_string):
     cmd = 'fastq_quality_trimmer -t %s -i %s -o %s ' % (25,fastq_string, out_file)    
     #If the file is already there it won't overwrite the old file
     if os.path.exists(out_file):
-        check = raw_input( "Test_outfile.fastq output file exists, overwrite? (Y/N)\n: ")
-        if check == "Y" or check == "y":
+        choice = choice_yn("Test_outfile.fastq output file exists, overwrite? (Y/N)\n: ")
+        if choice:
             subprocess.check_call(cmd,shell=True)
     else:
         subprocess.check_call(cmd,shell=True)
@@ -152,27 +155,15 @@ def cufflinks():
     endprogram = False
     while not endprogram:
         subprocess.check_call("clear",shell=True)
-        warning = raw_input("Welcome to cufflinks\n"
+        choice = choice_yn("Welcome to cufflinks\n"
                             "--------------------------------------\n"
                             "For cufflinks you need a sam/bam file."
-                            "\nAlready have it? press 1!\n"
-                            "Press 0 for "
+                            "\nAlready have it? press Y!\n"
+                            "Type N for "
                             '"help" on how to get the correct files. ')
 
-        if warning == '1':
-            sbamfiles = subprocess.check_output('find *.sorted.?am',shell=True)
-            sbamlist = sbamfiles.split()
-            key = 0
-            filedict = {}
-            for elem in sbamlist:
-                filedict[key]=elem
-                key += 1
-        
-            print "List of potential sam/bam files:\n","-"*20
-            for number, elem in filedict.items():
-                print number, elem
-            print "-"*20,"\n"
-    
+        if choice:
+            filedict = filelist("*.sorted.?am")
             input_file = raw_input('Insert the number of the sam/bam file: ')
             input_file = filedict[int(input_file)]
             out_folder = raw_input("Please specify the folder the results "
@@ -182,19 +173,23 @@ def cufflinks():
                 out_folder = "-o "+out_folder
             else:
                 out_folder = "-o ./"
-            cmd = 'cufflinks %s %s' %(out_folder, input_file)
-            
+            cmd = 'cufflinks -q --no-update-check %s %s' %(out_folder, input_file)
+            starttime = time.time()
             subprocess.check_call(cmd, shell = True)
+            elapsedtime = time.time() - starttime
+            print "Cufflinks took %s seconds to complete"%str(elapsedtime)
             endprogram = True
-        elif warning == '0':
+            
+        else:
             cont = raw_input("You can use HiSat to generate a sam/bam file "
                              "Run HiSat first to get the file\n"
                              "Press return to exit")
             endprogram = True
-        else:
-            print "That's not 1 or 0!"
+
     return
 
+def cuffdiff():
+    return
 def tophat():
     print "For tophat you need a file with indexes"
     name_indexes = raw_input('Name_indexes: ')
@@ -208,9 +203,8 @@ def hisat_build():
     build = False
     if os.path.isfile("build_index.1.ht2"):
         overwrite = None
-        while overwrite not in ["Y","N","y","n"]:
-            overwrite = raw_input("Some index files already exist, overwrite? Y|N: ")
-        if overwrite.upper() == "Y":
+        choice = choice_yn("Some index files already exist, overwrite? Y|N: ")
+        if choice:
             build = True
         else:
             return
@@ -218,18 +212,7 @@ def hisat_build():
         print "Index files do not exist, please create them"
         build = True
         
-    files = subprocess.check_output("find *.fasta", shell = True)
-    filelist = files.split()
-    key = 0
-    filedict = {}
-    for elem in filelist:
-        filedict[key]=elem
-        key += 1
-        
-    print "List of potential genome files:\n","-"*20
-    for number, elem in filedict.items():
-        print number, elem
-    print "-"*20,"\n"
+    filedict = filelist("*.f*a")
     
     genome = raw_input('Number of file containing draft genome: ')
     genome = filedict[int(genome)]
@@ -246,20 +229,7 @@ def hisat_align():
     print "Hisat needs the following files to function"
     print "- two files containing paired end read mate-pairs (example_1.fq & example_2.fq)"
 
-    files = subprocess.check_output("find *.fastq",shell = True)
-    #files += subprocess.check_output("find *.fq",shell = True)
-    filelist = files.split()
-    key = 0
-    filedict = {}
-    for elem in filelist:
-        filedict[key]=elem
-        key += 1
-    
-    print "List of potential fastq files:\n","-"*20
-    for number, elem in filedict.items():
-        print number, elem
-    print "-"*20,"\n"
-        
+    filedict = filelist("*.f*q*")      
     seq_1 = raw_input('Number of file containing _1 mate pair ends: ')
     seq_1 = filedict[int(seq_1)]
     seq_2 = raw_input('Number of file containing _2 mate pair ends: ')
@@ -272,7 +242,8 @@ def hisat_align():
     cmd = "hisat2 --dta-cufflinks -x build_index -1 %s -2 %s -S %s.sam" %(seq_1,seq_2,output)
     print cmd
     subprocess.check_call(cmd, shell = True)
-
+    print "HiSat is done mapping the reads."
+    print "Now it will create some files which you can use later on"
     #create bam, sorted bam and bam index file
     command = "samtools view -bS %s.sam > %s.bam"%(output,output)
     subprocess.check_call(command, shell = True)
@@ -308,6 +279,33 @@ def small_dataset(input_file,filename):
     outfile.close()
 
     return fastq_file
+
+def choice_yn(question):
+    choice = None
+    while choice not in ["y","n","Y","N"]:
+        choice = raw_input(question)
+        if choice not in ["y","n","Y","N"]:
+            print "That is not an option"
+    if choice in ["y","Y"]:
+        choice = True
+    else:
+        choice = False
+    return choice
+
+def filelist(pattern):
+    files = subprocess.check_output("find %s"%pattern,shell = True)
+    filelist = files.split()
+    key = 0
+    filedict = {}
+    for elem in filelist:
+        filedict[key]=elem
+        key += 1
+    
+    print "List of potential files:\n","-"*20
+    for number, elem in filedict.items():
+        print number, elem
+    print "-"*20,"\n"
+    return filedict
 
 if __name__ == '__main__':    
     jarjar()
