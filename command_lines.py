@@ -170,14 +170,20 @@ def cufflinks():
                                    "should be outputted to"
                                    "\n(Leave blank to use current folder): ")
             if len(out_folder)!= 0:
-                out_folder = "-o "+out_folder
+                folder = "-o "+out_folder
             else:
-                out_folder = "-o ./"
-            cmd = 'cufflinks -q --no-update-check %s %s' %(out_folder, input_file)
+                folder = "-o ./"
+            cmd = 'cufflinks -q --no-update-check %s %s' %(folder, input_file)
             starttime = time.time()
             subprocess.check_call(cmd, shell = True)
             elapsedtime = time.time() - starttime
             print "Cufflinks took %s seconds to complete"%str(elapsedtime)
+            add_to_merge = choice_yn("Do you want to add the generated GTF file to the merge file? Y|N: ")
+            if choice:
+                mergefile = open("gtfmerge.txt", "a")
+                mergefile.write("%s/transcripts.gtf"%out_folder)
+                mergefile.write("\n")
+                mergefile.close()
             endprogram = True
             
         else:
