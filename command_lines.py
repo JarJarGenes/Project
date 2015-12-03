@@ -16,7 +16,7 @@ def jarjar():
     """
     
     subprocess.check_call("clear",shell=True)
-    choices = {1:"Preprocessing data",2:"Mapping and Annotation tools",3:"Exit",4:"Help"}
+    choices = {1:"Preprocessing data",2:"Mapping and Annotation tools",3:"Exit",0:"Help"}
     out = False
     while not out:
         for key, value in choices.iteritems():
@@ -34,7 +34,7 @@ def jarjar():
             time.sleep(2)
             subprocess.check_call("clear",shell= True)
             out=True
-        
+            
 def help_user():
     """ Lists help for the jarjar() function
     """
@@ -58,9 +58,7 @@ def quality_game():
     """Quality interactive program
     """
     print "\nWelcome to quality check\n"
-    filedict = filelist("*.f*q")
-    input_file = raw_input("Please insert a number for your input file: ")
-    input_file = filedict[int(input_file)]
+    input_file = filelist("*.f*q","Please insert a number for your input file: ")
     fastX(input_file)
    
 
@@ -90,7 +88,7 @@ def annotation_mapping():
         print "Choose one of the following tasks:\n"
 
         tools = {1:'HiSat',2:"Cufflinks",3:"Cuffmerge",4:"Tophat2",
-                 5:"Bowtie", 6: "Help", 7: "Quit"}
+                 5:"Bowtie", 6: "GetProteins", 7: "BlastProteins" 8: "Help", 9: "Quit"}
 
         for number, tool in tools.items():
             print number, tool
@@ -114,10 +112,16 @@ def annotation_mapping():
             bowtie()
         elif tool == "6":
             subprocess.check_call("clear", shell = True)
+            gtf_to_protein()
+        elif tool == "7":
+            subprocess.check_call("clear", shell = True)
+            blastp()
+        elif tool == "8":
+            subprocess.check_call("clear", shell = True)
             print ('help lines')
             help_lines = "This is a section where there will eventually be help"
             print help_lines
-        elif tool ==  "7":
+        elif tool ==  "9":
             out = True
         else:
             print 'Thanks for using this interactive program!'
@@ -153,9 +157,10 @@ def hisat_align():
     
     print "Hisat needs the following files to function"
     print "- two files containing paired end read mate-pairs (example_1.fq & example_2.fq)"
-
     seq_1 = filelist("*.f*q*",'Number of file containing _1 mate pair ends: ')
+    subprocess.check_call("clear", shell = True)
     seq_2 = filelist("*.f*q*",'Number of file containing _2 mate pair ends: ')
+    subprocess.check_call("clear", shell = True)
     output = raw_input("please specify the name of the .sam output file (excluding extension): " )
     subprocess.check_call("clear",shell = True)
     print "\nHisat will now start aligning reads to the genome\n"
@@ -276,6 +281,53 @@ def bowtie2_options():
     
     return phred_score, format_file
 
+def gtf_to_protein():
+    """This is a function that needs a gff file and a genome file and 
+    returns proteins
+    """
+    scaffold_file = filelist("*.fasta","Please select the correct scaffold number: ")
+    gtf_filename = ("*.gtf","Please select the correct gtf file number: ")
+    init = gtf_filename.index('.') 
+    gff_filename = gtf_filename[:init]+'.gff3'      
+    cmd = 'TransDecoder-2.0/util/cufflinks_gtf_to_alignment_gff3.pl' \
+    " %s > %s" % (gtf_filename, gff_filename )  
+    subprocess.check_output(cmd, shell=True)
+    
+    #Name for the protein file from the transdecoder
+    protein_file_cat = 'protein_file_cat.fasta'
+    print "Running..."
+    print "Please wait..."
+    
+    #Problems in the protein_file_Cat.fasta
+    print scaffold_file
+    cmd = 'TransDecoder-2.0/util/gff3_file_to_proteins.pl {0} {1} > {2}'\
+    .format(gff_filename, scaffold_file, protein_file_cat)
+    subprocess.check_output(cmd, shell=True)
+
+    return protein_file_cat
+
+def blastp():
+    """This function needs a file with protein sequences and returns a 
+    file with matches Let op Evalue 1E-5 en coverage! 
+    """
+    protein_file_cat = filelist("*.fasta","Please select a protein sequence fasta file")
+    protein_file_arabidopsis("*.fasta","Please select the arabidopsis transcriptome fasta file")
+    init = protein_file_arabidopsis.index('.') 
+    database = 'db_proteins_'+protein_file_arabidopsis[:init]
+    #makeblastdb -in protein_file_arabidopsis.fasta -dbtype prot 
+    #-out db_protein_file_genes.db
+    cmd = 'makeblastdb -in %s -dbtype prot -out %s  '\
+    % (protein_file_arabidopsis,database)
+    subprocess.check_output(cmd, shell=True)
+    matches_file = 'matches.txt'
+    #blastp -query protein_file_cat.fasta -db db_protein_file_genes.db 
+    #-out matches.txt -outfmt 7 -evalue 1E-5
+    cmd = 'blastp -query %s -db %s -out %s -outfmt 7 -evalue 1E-5' \
+    % (protein_file_cat, database, matches_file)
+    subprocess.check_output(cmd, shell=True)
+    print "Done."
+    return matches_file  
+
 def choice_yn(question):
     """ Prompts a yes/no question, and waits for a "correct" answer
 
@@ -309,12 +361,13 @@ def filelist(pattern,question):
     choosefile -- str, name of the chosen file
     """
     
-    files = subprocess.check_output("find %s"%pattern,shell = True)
-    filelist = files.split()
+    files = subprocess.check_output("find . -name '%s'"%pattern,shell = True)
+    filelist = files.split("\n")
+    filelist = filelist[:-1]
     key = 0
     filedict = {}
     for elem in filelist:
-        filedict[key]=elem
+        filedict[key]= elem.lstrip("./")
         key += 1
     
     print "List of potential files:\n","-"*20
@@ -322,10 +375,13 @@ def filelist(pattern,question):
         print number, elem
     print "-"*20,"\n"
     print "\n\n"
+    filenum = raw_input(question)
     
-    while choosefile not in filedict.keys():
-        choosefile = raw_input(question)
-        choosefile = filedict[int(choosefile)]
+    while int(filenum) not in filedict.keys():
+        print "That file does not exist, choose a new one.\n"
+        filenum = raw_input(question)
+
+    choosefile = filedict[int(filenum)]
     
     return choosefile
 
