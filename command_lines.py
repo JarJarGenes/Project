@@ -88,7 +88,7 @@ def annotation_mapping():
         print "Choose one of the following tasks:\n"
 
         tools = {1:'HiSat',2:"Cufflinks",3:"Cuffmerge",4:"Tophat2",
-                 5:"Bowtie", 6: "GetProteins", 7: "BlastProteins" 8: "Help", 9: "Quit"}
+                 5:"Bowtie", 6: "GetProteins", 7: "BlastProteins" ,8: "Help", 9: "Quit"}
 
         for number, tool in tools.items():
             print number, tool
