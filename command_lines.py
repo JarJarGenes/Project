@@ -1,7 +1,7 @@
 #!usr/bin/env python
 """
 Authors: Raquel, Koen, Diego, Anna
-Script: Annotation
+Script: mapping
 """
 #modules
 from sys import argv
@@ -13,7 +13,7 @@ import itertools
 #function
 def jarjar():
     subprocess.check_call("clear",shell=True)
-    choices = {1:"Quality check",2:"Annotation tools",3:"Exit",4:"Help"}
+    choices = {1:"Quality check",2:"mapping tools",3:"Exit",4:"Help"}
     out = False
     while not out:
         for key, value in choices.iteritems():
@@ -22,7 +22,7 @@ def jarjar():
         if usr == '1':
             quality_game()
         elif usr == '2':
-            annotation_game()            
+            mapping_game()            
         elif usr == '0':
             help_user()    
         elif usr == '3':
@@ -35,7 +35,7 @@ def jarjar():
 def help_user():
     stop = False
     while not stop:
-        options = {1:"Quality check", 2: "Annotation tools", 3: "Exit"}    
+        options = {1:"Quality check", 2: "mapping tools", 3: "Exit"}    
         print ("\nWELCOME TO JAR-JAR PLATFORM!\nThis platform is design as a"
                "tool of tools, here you can choose between several option"
                "for treat your data. Choose one of the following:\n")
@@ -45,7 +45,7 @@ def help_user():
         if user == '3':
             stop = True
         elif user == '2':
-            annotation_game()
+            mapping_game()
         elif user == '1':
             quality_game()
 
@@ -85,17 +85,17 @@ def fastX(fastq_string):
         subprocess.check_call(cmd,shell=True)
     return out_file
 
-def annotation_game():
-    """Interactive program for annotation
+def mapping_game():
+    """Interactive program for mapping
     """
-    print "\nWelcome to annotation\n"
+    print "\nWelcome to mapping\n"
     out = False
 
     while not out:
         print "Choose one of the following tasks:\n"
 
-        tools = {1:'Bowtie2',2:"Cufflinks",3:"Cuffmerge",4:"Tophat2",
-                 5:"HiSat", 6: "Help", 7: "Quit"}
+        tools = {1:'Bowtie2',2:"Tophat2",3:"HiSat",4:"Cufflinks",5:"Cuffmerge",
+                  6: "Help", 7: "Quit"}
 
         for number, tool in tools.items():
             print number, tool
@@ -106,17 +106,17 @@ def annotation_game():
             bowtie()
         elif tool == '2':
             subprocess.check_call("clear", shell = True)
-            cufflinks()
-        elif tool == '3':
-            subprocess.check_call("clear", shell = True)
-            cuffmerge()
-        elif tool == '4':
-            subprocess.check_call("clear", shell = True)
             tophat()
-        elif tool == "5":
+        elif tool == '3':
             subprocess.check_call("clear", shell = True)
             hisat_build()
             hisat_align()
+        elif tool == '4':
+            subprocess.check_call("clear", shell = True)
+            cufflinks()
+        elif tool == "5":
+            subprocess.check_call("clear", shell = True)
+            cuffmerge()
         elif tool == "6":
             subprocess.check_call("clear", shell = True)
             print ('help lines')
@@ -274,6 +274,9 @@ def hisat_align():
 
     print "All files have been created, use igv.sh to load and view results!"
     return
+
+def annotation_game():
+    print 'Anna will add this ;)'
             
 def small_dataset(input_file,filename):
     """
