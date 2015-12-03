@@ -286,7 +286,7 @@ def gtf_to_protein():
     returns proteins
     """
     scaffold_file = filelist("*.fasta","Please select the correct scaffold number: ")
-    gtf_filename = ("*.gtf","Please select the correct gtf file number: ")
+    gtf_filename = filelist("*.gtf","Please select the correct gtf file number: ")
     init = gtf_filename.index('.') 
     gff_filename = gtf_filename[:init]+'.gff3'      
     cmd = 'TransDecoder-2.0/util/cufflinks_gtf_to_alignment_gff3.pl' \
@@ -311,7 +311,7 @@ def blastp():
     file with matches Let op Evalue 1E-5 en coverage! 
     """
     protein_file_cat = filelist("*.fasta","Please select a protein sequence fasta file")
-    protein_file_arabidopsis("*.fasta","Please select the arabidopsis transcriptome fasta file")
+    protein_file_arabidopsis = filelist("*.fasta","Please select the arabidopsis transcriptome fasta file")
     init = protein_file_arabidopsis.index('.') 
     database = 'db_proteins_'+protein_file_arabidopsis[:init]
     #makeblastdb -in protein_file_arabidopsis.fasta -dbtype prot 
