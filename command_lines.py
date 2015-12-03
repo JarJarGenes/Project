@@ -12,20 +12,23 @@ import itertools
 
 #function
 def jarjar():
+    """ Initial flow function, which allows for choosing what to do
+    """
+    
     subprocess.check_call("clear",shell=True)
-    choices = {1:"Quality check",2:"Annotation tools",3:"Exit",4:"Help"}
+    choices = {1:"Preprocessing data",2:"Mapping and Annotation tools",3:"Exit",4:"Help"}
     out = False
     while not out:
         for key, value in choices.iteritems():
             print key, value
-        usr = raw_input("Choose one of the above: ")
-        if usr == '1':
+        choice = raw_input("Choose one of the above: ")
+        if choice == '1':
             quality_game()
-        elif usr == '2':
-            annotation_game()            
-        elif usr == '0':
+        elif choice == '2':
+            annotation_mapping()            
+        elif choice == '0':
             help_user()    
-        elif usr == '3':
+        elif choice == '3':
             subprocess.check_call("clear",shell= True)
             print "Farewell, and may the force be with you."
             time.sleep(2)
@@ -33,6 +36,8 @@ def jarjar():
             out=True
         
 def help_user():
+    """ Lists help for the jarjar() function
+    """
     stop = False
     while not stop:
         options = {1:"Quality check", 2: "Annotation tools", 3: "Exit"}    
@@ -45,7 +50,7 @@ def help_user():
         if user == '3':
             stop = True
         elif user == '2':
-            annotation_game()
+            annotation_mapping()
         elif user == '1':
             quality_game()
 
@@ -53,19 +58,10 @@ def quality_game():
     """Quality interactive program
     """
     print "\nWelcome to quality check\n"
-    
-    try:
-        input_file = argv[1]
-    except IndexError:
-        input_file = raw_input("Please insert a name for your input file: ")
-    input_file, out = input_file_checker(input_file)
-    while not out:
-        with open(input_file) as fh:
-           filename = fh.name
-           index = filename.rfind('/')
-           filename = filename[index:].replace('/','')
-           fastq_file = small_dataset(fh,filename)    
-        fastX(fastq_file)
+    filedict = filelist("*.f*q")
+    input_file = raw_input("Please insert a number for your input file: ")
+    input_file = filedict[int(input_file)]
+    fastX(input_file)
    
 
     
@@ -73,9 +69,8 @@ def fastX(fastq_string):
     """
     This is a function that returns a fastq file with trimmed reads
     """
-    out_file = 'test_outfile_'+fastq_string
-    #cmd = 'fastq_quality_trimmer -t %s -i %s -o %s ' % (25,'../yeast/CENPK_RNA_1.fastq', out_file)
-    cmd = 'fastq_quality_trimmer -t %s -i %s -o %s ' % (25,fastq_string, out_file)    
+    out_file = "trimmed_"+fastq_string
+    cmd = 'fastq_quality_trimmer -t %s -i %s -o %s ' % ("25",fastq_string, out_file)    
     #If the file is already there it won't overwrite the old file
     if os.path.exists(out_file):
         choice = choice_yn("Test_outfile.fastq output file exists, overwrite? (Y/N)\n: ")
@@ -85,17 +80,17 @@ def fastX(fastq_string):
         subprocess.check_call(cmd,shell=True)
     return out_file
 
-def annotation_game():
-    """Interactive program for annotation
+def annotation_mapping():
+    """Interactive program for annotation and mapping
     """
-    print "\nWelcome to annotation\n"
+    print "\nWelcome to annotation & mapping\n"
     out = False
 
     while not out:
         print "Choose one of the following tasks:\n"
 
-        tools = {1:'Bowtie2',2:"Cufflinks",3:"Cuffmerge",4:"Tophat2",
-                 5:"HiSat", 6: "Help", 7: "Quit"}
+        tools = {1:'HiSat',2:"Cufflinks",3:"Cuffmerge",4:"Tophat2",
+                 5:"Bowtie", 6: "Help", 7: "Quit"}
 
         for number, tool in tools.items():
             print number, tool
@@ -103,7 +98,8 @@ def annotation_game():
         
         if tool == '1':
             subprocess.check_call("clear", shell = True)
-            bowtie()
+            hisat_build()
+            hisat_align()
         elif tool == '2':
             subprocess.check_call("clear", shell = True)
             cufflinks()
@@ -115,46 +111,77 @@ def annotation_game():
             tophat()
         elif tool == "5":
             subprocess.check_call("clear", shell = True)
-            hisat_build()
-            hisat_align()
+            bowtie()
         elif tool == "6":
             subprocess.check_call("clear", shell = True)
             print ('help lines')
-            #bowtie2 indexes command line: 'bowtie2-build -f %s %s' %(FASTA_reference, name_indexes)
-            #bowtie2 command line: 'bowtie2 -x %s -q or -f % --phred%d'    %(name_indexes,fastQ_file or fasta file respectively, phred_score(64|33))
-            #tophat2 command line: 'tophat2 -o %s %s  %s' %(out_folder, name_indexes, reads_file)
-            #samtools command line(we need this for cufflinks): 'samtools view %s - %s' %(bam_file, out_sam_file)
-            #cufflinks command line: 'cufflinks -o %s %s'%(out_folder, sam_file) [sam_file = 'accepted_hits.bam] 
+            help_lines = "This is a section where there will eventually be help"
+            print help_lines
         elif tool ==  "7":
             out = True
-
         else:
-            print 'Thanks for using us'
+            print 'Thanks for using this interactive program!'
 
-def bowtie():
-    phred_score, format_file = bowtie2_options()
-    cmd = ('bowtie2 -x %s -%s --phred%s >%s'
-           %(input_file,format_file, phred_score, out_folder))
-    ##(out_folder(name_indexes),input_file(fastQ_file or fasta file respectively),format_file phred_score(64|33))
+def hisat_build():
+    """ Creates index files of a (draft) genome in fasta format.
+    """
+    
+    build = False
+    if os.path.isfile("build_index.1.ht2"):
+        overwrite = None
+        choice = choice_yn("Some index files already exist, overwrite? Y|N: ")
+        if choice:
+            build = True
+        else:
+            return
+    else:
+        print "Index files do not exist, please create them"
+        build = True
+        
+    genome = filelist("*.f*a",'Number of file containing draft genome: ')
+    
+    #Runs hisat-build
+    if build:
+        cmd = "hisat2-build -p 4 %s build_index" %genome
+        print cmd
+        subprocess.check_call(cmd, shell = True)
     return
 
-def bowtie2_options():
-    """Bowtie run options
+def hisat_align():
+    """ HiSat maps reads to the genome using the index files from HiSat-build.
     """
-    check = True
-    while check:
-        phred_score = raw_input('What is your phred_score? (64 or 33)')
-        format_file = raw_input("Which format are you using?"
-                                "Please choose: 'q' (=fastQ) or 'f'(=fasta)")
-        if phred_score == '64' or phred_score == '33':
-            if format_file.lower() == 'q' or format_file.lower() == 'f':
-                check = False
-        else:
-            print 'Phred score or format file no valid, try again'
     
-    return phred_score, format_file
+    print "Hisat needs the following files to function"
+    print "- two files containing paired end read mate-pairs (example_1.fq & example_2.fq)"
+
+    seq_1 = filelist("*.f*q*",'Number of file containing _1 mate pair ends: ')
+    seq_2 = filelist("*.f*q*",'Number of file containing _2 mate pair ends: ')
+    output = raw_input("please specify the name of the .sam output file (excluding extension): " )
+    subprocess.check_call("clear",shell = True)
+    print "\nHisat will now start aligning reads to the genome\n"
+    time.sleep(1)
+    
+    cmd = "hisat2 --dta-cufflinks -p 4 -x build_index -1 %s -2 %s -S %s.sam" %(seq_1,seq_2,output)
+    print cmd
+    subprocess.check_call(cmd, shell = True)
+    print "HiSat is done mapping the reads."
+    print "Now it will create some files which you can use later on"
+    
+    #create bam, sorted bam and bam index file
+    command = "samtools view -bS %s.sam > %s.bam"%(output,output)
+    subprocess.check_call(command, shell = True)
+    command = "samtools sort %s.bam %s.sorted"%(output,output)
+    subprocess.check_call(command, shell = True)
+    command = "samtools index %s.sorted.bam"%output
+    subprocess.check_call(command, shell = True)
+
+    print "All files have been created, use igv.sh to load and view results!"
+    return
 
 def cufflinks():
+    """Runs cufflinks which generates predicted transcripts in a GTF file
+    """
+    
     endprogram = False
     while not endprogram:
         subprocess.check_call("clear",shell=True)
@@ -166,17 +193,17 @@ def cufflinks():
                             '"help" on how to get the correct files. ')
 
         if choice:
-            filedict = filelist("*.sorted.?am")
-            input_file = raw_input('Insert the number of the sam/bam file: ')
-            input_file = filedict[int(input_file)]
+            input_file = filelist("*.sorted.?am",'Insert the number of the sam/bam file: ')
             out_folder = raw_input("Please specify the folder the results "
                                    "should be outputted to"
                                    "\n(Leave blank to use current folder): ")
+
             if len(out_folder)!= 0:
                 folder = "-o "+out_folder
             else:
                 folder = "-o ./"
-            cmd = 'cufflinks -q -p 16 --no-update-check %s %s' %(folder, input_file)
+                
+            cmd = 'cufflinks -q -p 4 --no-update-check %s %s' %(folder, input_file)
             starttime = time.time()
             subprocess.check_call(cmd, shell = True)
             elapsedtime = time.time() - starttime
@@ -198,10 +225,11 @@ def cufflinks():
     return
 
 def cuffmerge():
-    
+    """ Merges multiple GTF files into a single GTF file to be used in cuffdiff
+    """
     choice = choice_yn("run Cuffmerge? Y|N: ")
     if choice:
-        cmd = "cuffmerge -p 16 gtfmerge.txt"
+        cmd = "cuffmerge -p 4 gtfmerge.txt"
         subprocess.check_call(cmd, shell = True)
         print "Cuffmerge ran succesfully, returning to previous screen"
         time.sleep(2)
@@ -209,8 +237,11 @@ def cuffmerge():
         print "Cuffmerge didn't run. Returning to previous screen now"
         time.sleep(2)     
     return
-                       
+
 def tophat():
+    """We're not using it
+    """
+    
     print "For tophat you need a file with indexes"
     name_indexes = raw_input('Name_indexes: ')
     reads_file = input_file
@@ -218,101 +249,66 @@ def tophat():
     #(out_folder, name_indexes, reads_file)
     return
 
-def hisat_build():
+def bowtie():
+    """ We're not using it
+    """
     
-    build = False
-    if os.path.isfile("build_index.1.ht2"):
-        overwrite = None
-        choice = choice_yn("Some index files already exist, overwrite? Y|N: ")
-        if choice:
-            build = True
+    phred_score, format_file = bowtie2_options()
+    cmd = ('bowtie2 -x %s -%s --phred%s >%s'
+           %(input_file,format_file, phred_score, out_folder))
+    ##(out_folder(name_indexes),input_file(fastQ_file or fasta file respectively),format_file phred_score(64|33))
+    return
+
+def bowtie2_options():
+    """Bowtie run options
+    """
+    
+    check = True
+    while check:
+        phred_score = raw_input('What is your phred_score? (64 or 33)')
+        format_file = raw_input("Which format are you using?"
+                                "Please choose: 'q' (=fastQ) or 'f'(=fasta)")
+        if phred_score == '64' or phred_score == '33':
+            if format_file.lower() == 'q' or format_file.lower() == 'f':
+                check = False
         else:
-            return
-    else:
-        print "Index files do not exist, please create them"
-        build = True
-        
-    filedict = filelist("*.f*a")
+            print 'Phred score or format file no valid, try again'
     
-    genome = raw_input('Number of file containing draft genome: ')
-    genome = filedict[int(genome)]
-
-    #Runs hisat-build
-    if build:
-        cmd = "hisat2-build -p 16 %s build_index" %genome
-        print cmd
-        subprocess.check_call(cmd, shell = True)
-    return
-
-def hisat_align():
-    
-    print "Hisat needs the following files to function"
-    print "- two files containing paired end read mate-pairs (example_1.fq & example_2.fq)"
-
-    filedict = filelist("*.f*q*")      
-    seq_1 = raw_input('Number of file containing _1 mate pair ends: ')
-    seq_1 = filedict[int(seq_1)]
-    seq_2 = raw_input('Number of file containing _2 mate pair ends: ')
-    seq_2 = filedict[int(seq_2)]            
-
-    output = raw_input("please specify the name of the .sam output file (excluding extension): " )
-    subprocess.check_call("clear",shell = True)
-    print "\nHisat will now start aligning reads to the genome\n"
-    time.sleep(3)
-    cmd = "hisat2 --dta-cufflinks -p 16 -x build_index -1 %s -2 %s -S %s.sam" %(seq_1,seq_2,output)
-    print cmd
-    subprocess.check_call(cmd, shell = True)
-    print "HiSat is done mapping the reads."
-    print "Now it will create some files which you can use later on"
-    #create bam, sorted bam and bam index file
-    command = "samtools view -bS %s.sam > %s.bam"%(output,output)
-    subprocess.check_call(command, shell = True)
-    command = "samtools sort %s.bam %s.sorted"%(output,output)
-    subprocess.check_call(command, shell = True)
-    command = "samtools index %s.sorted.bam"%output
-    subprocess.check_call(command, shell = True)
-
-    print "All files have been created, use igv.sh to load and view results!"
-    return
-            
-def small_dataset(input_file,filename):
-    """
-    Description: function that gets the first 4000 sequences in the input FastQ file
-    Input: FastQ file sequence
-    Output: Generates an output fastQ file with the 4000 sequences
-    Return: String with the name of the output fastq file name
-    """
-    counter = 0
-    fastq_string = ''     
-    
-    for line in input_file:
-
-        if line.startswith('@'):  
-            counter +=1                    
-        if counter > 4000: #To take small samples
-            break                    
-        fastq_string+=line        
-    #Generates the fastq file with the string that stored the 4000 sequences of the FastQ file
-    fastq_file = filename
-    outfile = open(fastq_file,'w')
-    outfile.write(fastq_string)
-    outfile.close()
-
-    return fastq_file
+    return phred_score, format_file
 
 def choice_yn(question):
+    """ Prompts a yes/no question, and waits for a "correct" answer
+
+    Arguments:
+    question -- str, a question that can be answered with yes or no
+
+    Output:
+    choice -- bool, True = Yes, False = No
+    """
+    
     choice = None
     while choice not in ["y","n","Y","N"]:
         choice = raw_input(question)
         if choice not in ["y","n","Y","N"]:
-            print "That is not an option"
+            print "That is not an option..."
     if choice in ["y","Y"]:
         choice = True
     else:
         choice = False
     return choice
 
-def filelist(pattern):
+def filelist(pattern,question):
+    """Displays a list of files matching the extension pattern on the screen
+
+    Arguments:
+    pattern -- str, A pattern recognised by the "find" function of linux.
+    question -- str, A question to be asked to the user to further specify
+                     which file to choose.
+
+    Output:
+    choosefile -- str, name of the chosen file
+    """
+    
     files = subprocess.check_output("find %s"%pattern,shell = True)
     filelist = files.split()
     key = 0
@@ -325,7 +321,13 @@ def filelist(pattern):
     for number, elem in filedict.items():
         print number, elem
     print "-"*20,"\n"
-    return filedict
+    print "\n\n"
+    
+    while choosefile not in filedict.keys():
+        choosefile = raw_input(question)
+        choosefile = filedict[int(choosefile)]
+    
+    return choosefile
 
 if __name__ == '__main__':    
     jarjar()
