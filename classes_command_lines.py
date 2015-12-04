@@ -5,7 +5,6 @@ Script: This is the Jar-Jar platform, here you can choose several options for tr
 your data in an interactive way. Preprocessing, annotation, mapping and help are options.
 """
 #modules
-from sys import argv
 import subprocess
 import os.path
 import time
@@ -54,46 +53,43 @@ class JarjarTools:
     #Below are the functions that can be called from the subclasses.            
     def filelist(self,pattern,question):
         """Displays a list of files matching the extension pattern on the screen
-    
+
         Arguments:
         pattern -- str, A pattern recognised by the "find" function of linux.
         question -- str, A question to be asked to the user to further specify
-        which file to choose.
-    
+                         which file to choose.
+
         Output:
         choosefile -- str, name of the chosen file
         """
         
-        try:
-            files = subprocess.check_output("find %s"%pattern,shell = True)
-        except subprocess.CalledProcessError:
-            print 'Looks like you don\'t have the requiered files!! ctrl+c to exit!!!!!!!!\nIf you want to continue anyway you have to wait 1 min...'
-            time.sleep(60)
-            files = False
-        if files:
-            filelist = files.split()
-            option_number = 0
-            filedict = {}
-            for elem in filelist:
-                filedict[key]=elem
-                option_number += 1
-            #A list of potential files is printed so the user can choose
-            #between the files inside the folder
-            print "List of potential files:\n","-"*20
-            for number, elem in filedict.items():
+        files = subprocess.check_output("find . -name '%s'"%pattern,shell = True)
+        filelist = files.split("\n")
+        filelist = filelist[:-1]
+        key = 0
+        filedict = {}
+        for elem in filelist:
+                filedict[key]= elem.lstrip("./")
+                key += 1
+        if len(filedict.keys()) == 0:
+                print "You do not have the correct files. Program will return to previous menu"
+                time.sleep(2)
+                return False
+        print "List of potential files:\n","-"*20
+        for number, elem in filedict.items():
                 print number, elem
-                print "-"*20,"\n"
-                print "\n\n"            
-            filenum = raw_input(question)
-            try:
-                while int(filenum) not in filedict.keys():
-                    print "That file does not exist, choose a new one.\n"
-                    filenum = raw_input(question)            
-                choosefile = filedict[int(filenum)]
-            except ValueError:
-                print 'Please insert a number from the list'
-    
-            return choosefile
+        print "-"*20,"\n"
+        print "\n\n"
+        filenum = raw_input(question)
+        
+        while int(filenum) not in filedict.keys():
+                print "That file does not exist, choose a new one.\n"
+                filenum = raw_input(question)
+
+        choosefile = filedict[int(filenum)]
+        
+        return choosefile
+
         
 
     def choice_yn(self,question):
@@ -125,13 +121,10 @@ class JarjarTools:
         Argument:
         cmd, which is the chosen command line from the function that is calling this one.
         -- string type
-        
+		
         Output: Run the command line in the shell
-        """
-
-        print cmd, 'now just print'
-        
- #       subprocess.check_output(cmd, shell=True)
+	"""
+	subprocess.check_output(cmd, shell=True)
 
     def check_call(self,cmd):
         """Calls subprocess.check_call in the command line
@@ -142,9 +135,7 @@ class JarjarTools:
 
         Output: Run the command line in the shell
         """
-        
-        print cmd, 'now just print'
- #       subprocess.check_call(cmd, shell=True)
+	subprocess.check_call(cmd, shell=True)
 
         
 class quality_game(JarjarTools):
@@ -282,7 +273,6 @@ class annotation_mapping_game(JarjarTools):
         
         build = False
         if os.path.isfile("build_index.1.ht2"):
-            overwrite = None
             choice = JarjarTools().choice_yn("Some index files already exist, overwrite? Y|N: ")
             if choice:
                 build = True
@@ -291,7 +281,9 @@ class annotation_mapping_game(JarjarTools):
         else:
             print "Index files do not exist, please create them"
             build = True
-        genome = JarjarTools().filelist("*.f*a",'Number of file containing draft genome: ')        
+        genome = JarjarTools().filelist("*.f*a",'Number of file containing draft genome: ') 
+        if not genome:
+            return
         #Runs hisat-build
         if build:
             cmd = "hisat2-build -p 4 %s build_index" %genome
@@ -366,7 +358,7 @@ class annotation_mapping_game(JarjarTools):
                 JarjarTools().check_call(cmd)
                 elapsedtime = time.time() - starttime
                 print "Cufflinks took %s seconds to complete"%str(elapsedtime)
-                add_to_merge = JarjarTools().choice_yn("Do you want to add the generated GTF file to the merge file? Y|N: ")
+                choice = JarjarTools().choice_yn("Do you want to add the generated GTF file to the merge file? Y|N: ")
                 if choice:
                     mergefile = open("gtfmerge.txt", "a")
                     mergefile.write("%s/transcripts.gtf"%out_folder)
@@ -374,9 +366,9 @@ class annotation_mapping_game(JarjarTools):
                     mergefile.close()
                 endprogram = True                
             else:
-                cont = raw_input("You can use HiSat to generate a sam/bam file "
-                                 "Run HiSat first to get the file\n"
-                                 "Press return to exit")
+                raw_input("You can use HiSat to generate a sam/bam file "
+                "Run HiSat first to get the file\n"
+                "Press return to exit")
                 endprogram = True
     
         return
@@ -461,7 +453,10 @@ class annotation_mapping_game(JarjarTools):
         Output:
         """
         scaffold_file = JarjarTools().filelist("*.fasta","Please select the correct scaffold number: ")
+		
         gtf_filename = JarjarTools().filelist("*.gtf","Please select the correct gtf file number: ")
+        if scaffold_file == False or gtf_filename == False:
+            return
         init = gtf_filename.index('.') 
         gff_filename = gtf_filename[:init]+'.gff3'      
         cmd = 'TransDecoder-2.0/util/cufflinks_gtf_to_alignment_gff3.pl' \
