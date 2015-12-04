@@ -88,7 +88,7 @@ class JarjarTools:
 
         choosefile = filedict[int(filenum)]
         
-        return choosefile
+        return '"'+choosefile+'"'
 
         
 
