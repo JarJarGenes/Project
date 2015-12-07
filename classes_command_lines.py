@@ -224,8 +224,8 @@ class annotation_mapping_game(JarjarTools):
         out = False    
         while not out:
             print "Choose one of the following tasks:\n"    
-            tools = {1:'HiSat',2:"Cufflinks",3:"Cuffmerge",4:"Tophat2",
-                     5:"Bowtie", 6: "GetProteins", 7: "BlastProteins" ,8: "Help", 0: "Exit"}    
+            tools = {1:'HiSat',2:"Cufflinks",3:"Cuffmerge",4: "CuffDiff", 5:"Tophat2",
+                     6:"Bowtie", 7: "GetProteins", 8: "BlastProteins" ,9: "Help", 0: "Exit"}    
             for number, tool in tools.items():
                 print number, tool
             tool = raw_input('\nWhat tool would you like to choose? ')
@@ -239,14 +239,16 @@ class annotation_mapping_game(JarjarTools):
             elif tool == '3':
                 self.cuffmerge()
             elif tool == '4':
+                self.cuffdiff()
+            elif tool == '5':
                 self.tophat()
-            elif tool == "5":
-                self.bowtie()
             elif tool == "6":
-                self.gtf_to_protein()
+                self.bowtie()
             elif tool == "7":
-                self.blastp()
+                self.gtf_to_protein()
             elif tool == "8":
+                self.blastp()
+            elif tool == "9":
                 self.help_lines()
             elif tool ==  "0":
                 #When out is True, the program exits from annotation_game
@@ -392,7 +394,64 @@ class annotation_mapping_game(JarjarTools):
             time.sleep(2)     
         return
 
+    def cuffdiff(self):
+        """ Runs cuffdiff and allows the user to choose files etc.
+
+        Arguments:
+        N/A
+
+        Output:
+        N/A
+        """
+        out_folder = raw_input("Please specify the folder the results "
+                                       "should be outputted to"
+                                       "\n(Leave blank to use current folder): ")    
+        if len(out_folder)!= 0:
+            folder = out_folder
+        else:
+            folder = "./"
+            
+        subprocess.check_call("clear",shell = True)
+        print "Output folder set to: "+folder
+        print "Reference .GTF file: "
+        print "Files selected: " + "\n"
+
+        gtf = str(JarjarTools.filelist(self,"*.g?f","What is your reference .gtf file? "))
+        subprocess.check_call("clear",shell = True)
+        print "Output folder set to: "+folder
+        print "Reference .GTF file: "+gtf
+        print "Files selected: " + "\n"
+        filenumber = int(raw_input("How many files do you want to compare with eachother? "))
+        file_seperated = ""
+        labels = ""
+        for x in range(filenumber):
+            subprocess.check_call("clear",shell = True)
+            print "Output folder set to: "+folder
+            print "Reference .GTF file: "+gtf
+            print "Files selected: %s"%labels + "\n"
+            filename = JarjarTools.filelist(self,"*.?am","Insert the number of file #%s and press return: "%str(x+1))
+            file_seperated += " %s"%filename
+            try:
+                labels += filename[filename.rindex('/')+1:filename.index(".")]+","
+            except ValueError:
+                labels += filename+","
+
+        labels = labels[:-1]
+        print "Output folder set to: "+folder
+        print "Reference .GTF file: "+gtf
+        print "Files selected: %s"%labels + "\n" + "\n"
         
+        
+        cmd = "cuffdiff -o %s -L %s -p 4 %s%s"%(folder,labels,gtf,file_seperated)
+        print "Cuffdiff will now run with these settings:"
+        print cmd
+        time.sleep(5)
+
+        subprocess.check_call(cmd,shell=True)
+
+        raw_input("Cufflinks is done running, press return to continue")
+        return
+    
     def tophat(self):
         """Calls the program tophat,    NOT COMPLETELY DEVELOPED
 
