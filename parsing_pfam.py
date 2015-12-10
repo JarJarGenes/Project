@@ -19,10 +19,10 @@ def parsing(pfam_file):
         if not line.startswith("#"):
             columns = line.strip()
             columns = columns.split()
-            if columns[3] not in pfam_dict:
-                pfam_dict[columns[3]] = columns[3],columns[0], columns[6]
+            if columns[2] not in pfam_dict:
+                pfam_dict[columns[2]] = columns[2],columns[0], columns[4]
                 counter_proteins += 1
-                line = "%-20s: %-20s %-20s \n" %(columns[3], columns[0], columns[6])
+                line = "%-20s: %-20s %-20s \n" %(columns[2], columns[0], columns[4])
                 outfile.write(line)
     pfam_file.close()
     print counter_proteins
