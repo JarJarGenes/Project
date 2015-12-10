@@ -30,7 +30,7 @@ class JarjarTools:
         """
         
         subprocess.check_call("clear",shell=True)
-        choices = {1:"Preprocessing data",2:"Mapping and Annotation tools",0:"Exit",3:"Help"}
+        choices = {1:"Preprocessing data",2:"Mapping and Annotation tools",0:"Exit",3:"Help",4:"Auto-run"}
         out = False
         while not out:
             for number, one_choice in choices.iteritems():
@@ -41,7 +41,9 @@ class JarjarTools:
             elif choice == '2':
                 annotation_mapping_game()            
             elif choice == '3':
-                help_user()    
+                help_user()
+            elif choice == '4':
+                autoRun()
             elif choice == '0':
                 subprocess.check_call("clear",shell= True)
                 print "Farewell, and may the force be with you."
@@ -421,7 +423,7 @@ class annotation_mapping_game(JarjarTools):
         print "Output folder set to: "+folder
         print "Reference .GTF file: "+gtf
         print "Files selected: " + "\n"
-        filenumber = int(raw_input("How many files do you want to compare with eachother? "))
+        filenumber = int(raw_input("How many files do you want to compare with each other (min. 2)? "))
         file_seperated = ""
         labels = ""
         for x in range(filenumber):
@@ -559,6 +561,63 @@ class annotation_mapping_game(JarjarTools):
         print "Done."
         return matches_file 
 
+class autoRun(JarjarTools):
+    
+    def splitFastQ(self):
+    """Splits a fastq file that has concatenated reads into two files
+
+    Arguments:
+    filename -- str, name of the fastqfile (excluding extension)
+    
+    Output:
+    N/A
+    """
+    path = "/local/data/BIF30806_2015_2/project/RNAseq/SRP041695/"
+    filenames = ["SRR127157_complete.fastq","SRR127158.fastq","SRR127159.fastq"]
+    
+    for filename in filenames:
+        openfile = open(path+filename)
+        out_1 = open(os.path.splitext(filename)[0]+"_1.fastq","w")
+        out_2 = open(os.path.splitext(filename)[0]+"_2.fastq","w")
+        
+        for line in openfile:
+            line = line.strip()
+            if line.startswith("@") or line.startswith("+"):
+                out_1.write(line)
+                out_1.write("\n")
+                out_2.write(line)
+                out_2.write("\n")
+            elif line != "\n":
+                length = len(line)
+                split = length/2
+                part1 = line[:int((length/2))]
+                part2 = line[int((length/2)):]
+                out_1.write(part1+"\n")
+                out_2.write(part2+"\n")
+    
+        openfile.close()
+        out_1.close()
+        out_2.close()
+    return
+
+    def runtools(self):
+        logfile(self,"SplitFastQ","Started")
+        splitFastQ(self)
+        logfile(self,"SplitFastQ","Completed")
+        genome = "cro_scaffold
+        subprocess.check_call("hisat2-build -p 4 %s genome_index" %genome)
+        return
+    
+    def logfile(self,program,state):
+        log = open("log.txt","a")
+        log.write("["+time.strftime('%H:%M:%S')+"]\t")
+        log.write(program+"\t"+state+"\n")
+        log.close()
+        return
+
+    def checkfiles(self):
+        return
+    
 
 if __name__ == '__main__':    
     JarjarTools().options()
