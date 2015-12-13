@@ -9,7 +9,15 @@ from sys import argv
 import os.path
 
 def getSequencesfromGenes(genes,fasta_file):
-    
+    """
+	This is a function that generates a Fasta file from 
+	a file that contains a list of the name of the sequences
+	
+	Input genes: File with a list of the name of the genes too look
+	Input fasta_file: Fasta file of the sequences to look at
+	Output: returns two arrays containing all the names and the sequences
+	in order
+	"""
     fasta_file  = open(fasta_file)
     genes       = open(genes)
     flag        = False
@@ -47,7 +55,15 @@ def getSequencesfromGenes(genes,fasta_file):
     return name,seq
 
 def generateFastaFile(name,seq):
-    output = 'mia_genes.fasta'
+	"""
+	This is a function that generates a fasta file from the two arrays
+	Input name: array containing all the name of the id of each sequences
+	Input: seq: array containing all the sequences
+	Output: creates a file named mia_genes.fasta with the selected id names and 
+	sequences
+	"""
+    
+	output = 'mia_genes.fasta'
     if not os.path.isfile(output):
 
         with open(output,"a+") as file_fasta:

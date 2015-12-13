@@ -11,9 +11,10 @@ def blast_parser(blast_result):
     
     """
     Result output from the TransDecoder Blastp     
-    Input "matches.txt"    
+    Input "matches.txt" from the blastp 
     Given an output file from blast, format 7 (tab file),
-    it returns a dictionary with query as key and hit name and identity as list of values.
+    it returns a dictionary with query as key and hit name and identity 
+	as list of values.
     """
     my_blast =  open(blast_result)
     blast_dict = {}
@@ -54,7 +55,14 @@ def blast_parser(blast_result):
     return string_no_matches
 
 def generateFileNoMatches(no_matches):
-    
+    """
+	Function that generates a fasta file the names of the no matches
+	less than 100.00 of identity
+	Input no_matches: String with all the no_matches
+	Output: generates a fasta file wht the name of no_matches
+	with the string of the matches less than 100.00
+	"""
+	
     genes = 'no_matches.txt'
     with open(genes,"a+") as no_matches_file_fasta:
         
@@ -63,6 +71,16 @@ def generateFileNoMatches(no_matches):
 
 def getSequencesfromGenes(genes,fasta_file):
     
+	"""
+	Function that generates a fasta file according to the
+	id name of the sequence and sequence of the hits with identity
+	less than 100.00
+	Input: genes file with the name of the no matches in this case
+	Output: fasta file to look for the names
+	Return: two arrays containing name and sequences of the no matches
+	"""
+	
+	
     fasta_file  = open(fasta_file)
     genes       = open(genes)
     flag        = False
@@ -108,7 +126,12 @@ def getSequencesfromGenes(genes,fasta_file):
     return name,seq
     
 def generateFastaFile(name,seq):
-    output = 'no_matches_genes.fasta'
+
+	"""
+	Generates a fasta file with the name and sequence from the no matches
+	input: array of name and sequence
+    """
+	output = 'no_matches_genes.fasta'
     if not os.path.isfile(output):
 
         with open(output,"a+") as file_fasta:
