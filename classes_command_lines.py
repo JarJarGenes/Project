@@ -563,6 +563,8 @@ class annotation_mapping_game(JarjarTools):
 
 class autoRun(JarjarTools):
     
+    filenames = ["SRR127157_complete.fastq","SRR127158.fastq","SRR127159.fastq"]
+    
     def splitFastQ(self):
     """Splits a fastq file that has concatenated reads into two files
 
@@ -573,7 +575,6 @@ class autoRun(JarjarTools):
     N/A
     """
     path = "/local/data/BIF30806_2015_2/project/RNAseq/SRP041695/"
-    filenames = ["SRR127157_complete.fastq","SRR127158.fastq","SRR127159.fastq"]
     
     for filename in filenames:
         openfile = open(path+filename)
@@ -604,8 +605,34 @@ class autoRun(JarjarTools):
         logfile(self,"SplitFastQ","Started")
         splitFastQ(self)
         logfile(self,"SplitFastQ","Completed")
-        genome = "cro_scaffold
+        genome = "cro_scaffold.min_1000bp.fasta"
+        logfile(self,"HiSat2-build","Started")
         subprocess.check_call("hisat2-build -p 4 %s genome_index" %genome)
+        logfile(self,"HiSat2-build","Completed")
+        logfile(self,"HiSat2-align","Started")
+        for filename in filenames:
+            file_1 = os.path.splitext(filename)[0]+"_1.fastq
+            file_2 = os.path.splitext(filename)[0]+"_2.fastq
+            cmd = "hisat2 --dta-cufflinks -p 4 "
+            cmd += "-x genome_index -1 %s -2 %s -S %s.sam"%(file_1,file_2,os.path.splitext(filename)[0])
+            subprocess.check_call(cmd,shell=True)
+        logfile(self,"HiSat2-align","Completed")
+        logfile(self,"Samtools","Started")
+        for filename in filenames:
+            filenm = os.path.splitext(filename)[0]
+        command = "samtools view -bS %s.sam > %s.bam"%(filenm,filenm)
+        JarjarTools().check_call(command)
+        command = "samtools sort %s.bam %s.sorted"%(filenm,filenm)
+        JarjarTools().check_call(command)
+        command = "samtools index %s.sorted.bam"%filenm
+        JarjarTools().check_call(command)
+        logfile(self,"Samtools","Completed")
+        logfile(self,"Cufflinks","Started")
+        for filename in filenames:
+            inputname = os.path.splitext(filename)[0]+".sorted.bam"
+            folder = "Cufflinks_"+os.path.splitext(filename)[0]
+            cmd = 'cufflinks -q -p 4 --no-update-check %s %s' %(folder, inputname)
+        logfile(self,"Cufflinks","Completed")
         return
     
     def logfile(self,program,state):
