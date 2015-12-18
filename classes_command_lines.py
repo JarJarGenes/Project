@@ -632,7 +632,23 @@ class autoRun(JarjarTools):
             inputname = os.path.splitext(filename)[0]+".sorted.bam"
             folder = "Cufflinks_"+os.path.splitext(filename)[0]
             cmd = 'cufflinks -q -p 4 --no-update-check %s %s' %(folder, inputname)
+            s= open("cuffmerge.txt", "a")
+            s.write(folder+"/transcripts.gtf\n")
+            s.close
         logfile(self,"Cufflinks","Completed")
+        logfile(self,"Cuffmerge","Started")
+        command = "cuffmerge -p 4 cuffmerge.txt"
+        JarjarTools().check_call(command)
+        if os.path.isfile("cuffmerge.txt"):
+            subprocess.check_call("rm cuffmerge.txt",shell = True)
+        logfile(self,"Cuffmerge","Completed")
+        logfile(self,"Cuffdiff","Started")
+        output = "Cuffdiff"
+        file_seperated = ""
+        gtf = "filtered_gtf.gtf"
+        for filename in filenames:
+            file_seperated+= " %s.sorted.bam"%os.path.splitext(filename)[0]
+        cmd = "cuffdiff -o %s -p 4 %s%s"%(output,gtf,file_seperated)
         return
     
     def logfile(self,program,state):
