@@ -227,7 +227,7 @@ class annotation_mapping_game(JarjarTools):
         while not out:
             print "Choose one of the following tasks:\n"    
             tools = {1:'HiSat',2:"Cufflinks",3:"Cuffmerge",4: "CuffDiff", 5:"Tophat2",
-                     6:"Bowtie", 7: "GetProteins", 8: "BlastProteins" ,9: "Help", 0: "Exit"}    
+                     6:"Bowtie", 7: "GetProteins", 8: "BlastProteins" ,12: "Help", 9:'Cuffcompare', 10: 'Count tracking results from cuffcompare',11:'Filter a gtf', 0: "Exit"}    
             for number, tool in tools.items():
                 print number, tool
             tool = raw_input('\nWhat tool would you like to choose? ')
@@ -251,7 +251,13 @@ class annotation_mapping_game(JarjarTools):
             elif tool == "8":
                 self.blastp()
             elif tool == "9":
+                self.cuffcompare()
+            elif tool == "10":
+                self.count_codes()
+            elif tool == "11":
                 self.help_lines()
+            elif tool == "12":
+                self.generate_gtf()
             elif tool ==  "0":
                 #When out is True, the program exits from annotation_game
                 out = True
@@ -264,15 +270,12 @@ class annotation_mapping_game(JarjarTools):
         """
         
         print 'help lines'
-        help_lines = "This is a section where there will eventually be help\n"
+        help_lines = "UNDER CONSTRUCTION\nThis is a section where there will eventually be help\n"
         print help_lines
 
     
     def hisat_build(self):
         """ Creates index files of a (draft) genome in fasta format
-
-        Input:
-        Output:
         """
         
         build = False
@@ -299,9 +302,6 @@ class annotation_mapping_game(JarjarTools):
     
     def hisat_align(self):
         """ HiSat maps reads to the genome using the index files from HiSat-build.
-
-        Input:
-        Output:
         """
         
         print "Hisat needs the following files to function"
@@ -395,7 +395,32 @@ class annotation_mapping_game(JarjarTools):
             print "Cuffmerge didn't run. Returning to previous screen now"
             time.sleep(2)     
         return
+        
+    def generate_gtf(self):
+        """Filters a big gtf file selecting only the item that are in the txt file
 
+        Input: Reference gtf and single list with scaffolds names
+        Output: New filtered_gtf file
+        """
+
+        records = []
+        my_list = JarjarTools.filelist(self,"*.txt","Insert a txt file with a list of selected scaffolds: ")
+        my_file = open(my_list)
+        for line in my_file:
+            records += [line.strip()]
+        my_file.close()
+        gff = str(JarjarTools.filelist(self,"*.g?f","What is your reference .gtf file? "))
+        if my_list and gff:
+            new_gff = 'filtered_%s'%gff
+            with open(new_gff) as new:
+                for line in open(gff):
+                    if line.startswith('#'):
+                        new.write(line)
+                    else:
+                        for scaffols in records:
+                            if scaffols.strip() in line:
+                                new.write(line)
+        return
     def cuffdiff(self):
         """ Runs cuffdiff and allows the user to choose files etc.
 
@@ -456,9 +481,6 @@ class annotation_mapping_game(JarjarTools):
     
     def tophat(self):
         """Calls the program tophat,    NOT COMPLETELY DEVELOPED
-
-        Input:
-        Output:
         """
         
         print "For tophat you need a file with indexes"
@@ -472,9 +494,6 @@ class annotation_mapping_game(JarjarTools):
     
     def bowtie(self):
         """ Calls the program bowtie,    NOT COMPLETELY DEVELOPED
-
-        Input:
-        Output:
         """
         
         phred_score, format_file = self.bowtie2_options()
@@ -486,10 +505,7 @@ class annotation_mapping_game(JarjarTools):
 
     
     def bowtie2_options(self):
-        """Bowtie run options
-
-        Input:
-        Output:
+        """Bowtie run options, 	NOT COMPLETELY DEVELOPED
         """
         
         check = True
@@ -509,9 +525,6 @@ class annotation_mapping_game(JarjarTools):
     def gtf_to_protein(self):
         """This is a function that needs a gff file and a genome file and 
         returns proteins
-
-        Input:
-        Output:
         """
         scaffold_file = JarjarTools().filelist("*.fasta","Please select the correct scaffold number: ")
 		
@@ -539,9 +552,6 @@ class annotation_mapping_game(JarjarTools):
     def blastp(self):
         """This function needs a file with protein sequences and returns a 
         file with matches Let op Evalue 1E-5 en coverage!
-
-        Input:
-        Output:
         """
         protein_file_cat = JarjarTools().filelist("*.fasta","Please select a protein sequence fasta file")
         protein_file_arabidopsis = JarjarTools().filelist("*.fasta","Please select the arabidopsis transcriptome fasta file")
@@ -560,6 +570,68 @@ class annotation_mapping_game(JarjarTools):
         JarjarTools().check_out(cmd)
         print "Done."
         return matches_file 
+        
+    def cuffcompare(self):
+        """Compares your assembled transcripts to a reference annotation
+
+        Input: reference gtf file and quer gtf file
+        Outputs:
+        - Overall summary statistics: <outprefix>.stats
+        - The “union” of all transfrags in all assemblies: <outprefix>.combined.gtf
+        - Transfrags matching to each reference transcript: <cuff_in>.refmap
+        - Best reference transcript for each transfrag: <cuff_in>.tmap
+        - Tracking transfrags through multiple samples: <outprefix>.tracking
+        Go to http://cole-trapnell-lab.github.io/cufflinks/cuffcompare/#cuffcompare-output-files
+        for a detailed output explanation
+        """
+        ref = JarjarTools().filelist('*.g?t','Select a reference gtf file: ')
+        query = JarjarTools().filelist('*.g?t','Select a query gtf file: ')
+        if query and ref:
+            cmd = 'cuffcompare -r %s %s' %(ref,query)
+            JarjarTools().check_call(cmd)
+        print 'Done'
+        return
+    
+    def count_codes(self):
+        """If you run cuffcompare with the -r option, tracking rows
+        will contain the values shown in help line above.
+        """
+        out = False
+        go = False
+        while not out:
+            code = raw_input('What code do you want to count? Insert ONE symbol (0 to exit, 1 for help)')
+            if code == '0':
+                out=True
+            elif code == '1':
+                print ("List of codes in tracking file:\n"
+                "Priority	Code	Description\n"
+            "1	        =	Complete match of intron chain\n"
+            "2	        c	Contained\n"
+            "3	        j	Potentially novel isoform (fragment): at least one splice junction is shared with a reference transcript\n"
+            "4	        e	Single exon transfrag overlapping a reference exon and at least 10 bp of a reference intron, indicating a possible pre-mRNA fragment.\n"
+            "5	        i	A transfrag falling entirely within a reference intron\n"
+            "6	        o	Generic exonic overlap with a reference transcript\n"
+            "7	        p	Possible polymerase run-on fragment (within 2Kbases of a reference transcript)\n"
+            "8	        r	Repeat. Currently determined by looking at the soft-masked reference sequence and applied to transcripts where at least 50% of the bases are lower case\n"
+            "9	        u	Unknown, intergenic transcript\n"
+            "10	        x	Exonic overlap with reference on the opposite strand\n"
+            "11	        s	An intron of the transfrag overlaps a reference intron on the opposite strand (likely due to read mapping errors)\n"
+            "12	        .	(.tracking file only, indicates multiple classifications)\n"
+                       "CHOOSE ONE SYMBOL FROM THE SECOND COLUMN")
+            elif code in ['=','c','j','e','i','o','p','r','u','x','s']:
+                out = True
+                go = True
+        if go:
+            track = JarjarTools().filelist('*.tracking','Select a tracking file from cuffcompare output: ')
+            gtf_file = open(track)
+            count = 0
+            match = '\t%s\t' %code
+            for line in my_file:
+                if match in line:
+                    count+=1
+            print count
+            gtf_file.close()
+        return
 
 class autoRun(JarjarTools):
     
@@ -611,8 +683,8 @@ class autoRun(JarjarTools):
         logfile(self,"HiSat2-build","Completed")
         logfile(self,"HiSat2-align","Started")
         for filename in filenames:
-            file_1 = os.path.splitext(filename)[0]+"_1.fastq
-            file_2 = os.path.splitext(filename)[0]+"_2.fastq
+            file_1 = os.path.splitext(filename)[0]+"_1.fastq"
+            file_2 = os.path.splitext(filename)[0]+"_2.fastq"
             cmd = "hisat2 --dta-cufflinks -p 4 "
             cmd += "-x genome_index -1 %s -2 %s -S %s.sam"%(file_1,file_2,os.path.splitext(filename)[0])
             subprocess.check_call(cmd,shell=True)
