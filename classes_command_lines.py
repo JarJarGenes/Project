@@ -638,40 +638,42 @@ class autoRun(JarjarTools):
     filenames = ["SRR127157_complete.fastq","SRR127158.fastq","SRR127159.fastq"]
     
     def splitFastQ(self):
-    """Splits a fastq file that has concatenated reads into two files
+        """Splits a fastq file that has concatenated reads into two files
 
-    Arguments:
-    filename -- str, name of the fastqfile (excluding extension)
-    
-    Output:
-    N/A
-    """
-    path = "/local/data/BIF30806_2015_2/project/RNAseq/SRP041695/"
-    
-    for filename in filenames:
-        openfile = open(path+filename)
-        out_1 = open(os.path.splitext(filename)[0]+"_1.fastq","w")
-        out_2 = open(os.path.splitext(filename)[0]+"_2.fastq","w")
+        Arguments:
+        filename -- str, name of the fastqfile (excluding extension)
         
-        for line in openfile:
-            line = line.strip()
-            if line.startswith("@") or line.startswith("+"):
-                out_1.write(line)
-                out_1.write("\n")
-                out_2.write(line)
-                out_2.write("\n")
-            elif line != "\n":
-                length = len(line)
-                split = length/2
-                part1 = line[:int((length/2))]
-                part2 = line[int((length/2)):]
-                out_1.write(part1+"\n")
-                out_2.write(part2+"\n")
-    
-        openfile.close()
-        out_1.close()
-        out_2.close()
-    return
+        Output:
+        N/A
+        """
+        
+        path = "/local/data/BIF30806_2015_2/project/RNAseq/SRP041695/"
+        
+        for filename in filenames:
+            openfile = open(path+filename)
+            out_1 = open(os.path.splitext(filename)[0]+"_1.fastq","w")
+            out_2 = open(os.path.splitext(filename)[0]+"_2.fastq","w")
+            
+            for line in openfile:
+                line = line.strip()
+                if line.startswith("@") or line.startswith("+"):
+                    out_1.write(line)
+                    out_1.write("\n")
+                    out_2.write(line)
+                    out_2.write("\n")
+                elif line != "\n":
+                    length = len(line)
+                    split = length/2
+                    part1 = line[:int((length/2))]
+                    part2 = line[int((length/2)):]
+                    out_1.write(part1+"\n")
+                    out_2.write(part2+"\n")
+        
+            openfile.close()
+            out_1.close()
+            out_2.close()
+        return
+
 
     def runtools(self):
         logfile(self,"SplitFastQ","Started")
